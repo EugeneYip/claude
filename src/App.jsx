@@ -1070,7 +1070,9 @@ export default function ClaudeCompleteGuide() {
         {/* ─── FOOTER ─── */}
         <footer style={{ textAlign: "center", padding: "32px 0 0", borderTop: `1px solid ${C.lineLight}` }}>
           <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.7 }}>
-            Claude User Guide · Comprehensive Edition · Built for sustained reading and practical reference
+            Claude User Guide
+             <br />
+            © 2026 EugeneYip.com All Rights Reserved. 
           </p>
         </footer>
       </div>
