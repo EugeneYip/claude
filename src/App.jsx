@@ -1,130 +1,78 @@
-import { useMemo, useState, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-/* ═══════════════════════════════════════════════════════════════
-   ICON SYSTEM — Pure SVG, zero dependencies
-   ═══════════════════════════════════════════════════════════════ */
 const ICON_PATHS = {
+  bookOpen: [
+    "M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z",
+    "M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z",
+  ],
   brain: [
     "M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17a3 3 0 003 3h2a3 3 0 003-3v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7z",
     "M9.5 9a2.5 2.5 0 015 0",
-    "M12 2v3M8 5.5L6 4M16 5.5l2-1.5",
+    "M12 2v3",
   ],
-  search: [
-    "M11 4a7 7 0 110 14 7 7 0 010-14z",
-    "M21 21l-4.35-4.35",
-  ],
-  folder: [
-    "M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z",
-    "M9 13h6M9 16h4",
-  ],
-  sparkles: [
-    "M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z",
-    "M18 14l.75 2.25L21 17l-2.25.75L18 20l-.75-2.25L15 17l2.25-.75L18 14z",
-  ],
-  fileText: [
-    "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z",
-    "M14 2v6h6M8 13h8M8 17h6M8 9h2",
-  ],
-  graduation: [
-    "M2 10l10-5 10 5-10 5-10-5z",
-    "M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5",
-    "M22 10v6",
-  ],
-  monitor: [
-    "M3 4h18a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V5a1 1 0 011-1z",
-    "M8 20h8M12 16v4",
-  ],
+  search: ["M11 4a7 7 0 110 14 7 7 0 010-14z", "M21 21l-4.35-4.35"],
   globe: [
     "M12 2a10 10 0 100 20 10 10 0 000-20z",
     "M2 12h20",
     "M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z",
   ],
-  grid: [
-    "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z",
+  folderOpen: [
+    "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z",
+    "M2 10h20",
   ],
-  presentation: [
-    "M2 3h20v14H2V3z",
-    "M12 17v4M8 21h8",
-    "M7 8l3 3 2-2 5 5",
+  sparkles: [
+    "M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z",
+    "M19 14l.75 2.25L22 17l-2.25.75L19 20l-.75-2.25L16 17l2.25-.75z",
   ],
-  browser: [
-    "M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z",
-    "M3 8h18",
-    "M6 5.5h.01M8.5 5.5h.01M11 5.5h.01",
+  fileText: [
+    "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
+    "M14 2v6h6",
+    "M16 13H8",
+    "M16 17H8",
+    "M10 9H8",
   ],
-  bot: [
-    "M4 8a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V8z",
-    "M9 12h.01M15 12h.01",
-    "M9 16h6",
-    "M12 2v4",
+  layers: ["M12 2l10 6-10 6L2 8l10-6z", "M2 12l10 6 10-6", "M2 17l10 6 10-6"],
+  workflow: [
+    "M3 3h4v4H3z",
+    "M17 3h4v4h-4z",
+    "M10 17h4v4h-4z",
+    "M5 7v3a4 4 0 0 0 4 4h2",
+    "M19 7v3a4 4 0 0 1-4 4h-2",
   ],
-  eye: [
-    "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z",
-    "M12 9a3 3 0 110 6 3 3 0 010-6z",
-  ],
-  share: [
-    "M18 5a3 3 0 11-6 0 3 3 0 016 0zM6 12a3 3 0 11-6 0 3 3 0 016 0zM18 19a3 3 0 11-6 0 3 3 0 016 0z",
-    "M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98",
-  ],
-  clock: [
-    "M12 2a10 10 0 100 20 10 10 0 000-20z",
-    "M12 6v6l4 2",
-  ],
-  wand: [
-    "M15 4l5 5-11 11H4v-5L15 4z",
-    "M18 2l4 4",
-    "M2 22l3-3",
-  ],
-  checkCircle: [
-    "M12 2a10 10 0 100 20 10 10 0 000-20z",
-    "M8 12l3 3 5-5",
-  ],
-  chevronDown: ["M6 9l6 6 6-6"],
-  chevronUp: ["M18 15l-6-6-6 6"],
-  library: [
-    "M4 19V5a2 2 0 012-2h4v16H6a2 2 0 01-2-2z",
-    "M10 3h4v16h-4z",
-    "M14 3h4a2 2 0 012 2v12a2 2 0 01-2 2h-4V3z",
-  ],
-  pencilRuler: [
-    "M3 21l4-4M7 17l-4 4",
-    "M14.5 2.5l7 7-9.5 9.5H5v-7L14.5 2.5z",
-    "M12 8l4 4",
-  ],
+  code: ["M16 18l6-6-6-6", "M8 6l-6 6 6 6", "M14 4l-4 16"],
+  table: ["M3 3h18v18H3z", "M3 9h18", "M3 15h18", "M9 3v18", "M15 3v18"],
   route: [
-    "M3 17a2 2 0 104 0 2 2 0 00-4 0zM17 7a2 2 0 104 0 2 2 0 00-4 0z",
+    "M3 17a2 2 0 104 0 2 2 0 00-4 0z",
+    "M17 7a2 2 0 104 0 2 2 0 00-4 0z",
     "M7 17h4a4 4 0 004-4V9",
     "M17 9V7",
   ],
-  box: [
-    "M12 2l9 5v10l-9 5-9-5V7l9-5z",
-    "M12 22V12M12 12L3 7M12 12l9-5",
+  terminal: [
+    "M3 3h18a1 1 0 011 1v16a1 1 0 01-1 1H3a1 1 0 01-1-1V4a1 1 0 011-1z",
+    "M7 8l4 4-4 4",
+    "M13 16h4",
   ],
-  arrowRight: ["M5 12h14M13 6l6 6-6 6"],
-  lightbulb: [
-    "M9 18h6M10 22h4",
-    "M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z",
-  ],
-  alertTriangle: [
-    "M12 2L1 21h22L12 2z",
-    "M12 9v4M12 17h.01",
-  ],
-  zap: ["M13 2L3 14h9l-1 8 10-12h-9l1-8z"],
+  shield: ["M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"],
   target: [
     "M12 2a10 10 0 100 20 10 10 0 000-20z",
     "M12 6a6 6 0 100 12 6 6 0 000-12z",
     "M12 10a2 2 0 100 4 2 2 0 000-4z",
   ],
-  layers: [
-    "M12 2l10 6-10 6L2 8l10-6z",
-    "M2 12l10 6 10-6",
-    "M2 17l10 6 10-6",
-  ],
-  terminal: [
-    "M3 3h18a1 1 0 011 1v16a1 1 0 01-1 1H3a1 1 0 01-1-1V4a1 1 0 011-1z",
-    "M7 8l4 4-4 4M13 16h4",
-  ],
+  eye: ["M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z", "M12 9a3 3 0 110 6 3 3 0 010-6z"],
+  alertTriangle: ["M12 2L1 21h22L12 2z", "M12 9v4", "M12 17h.01"],
+  checkCircle: ["M12 2a10 10 0 100 20 10 10 0 000-20z", "M8 12l3 3 5-5"],
+  chevronDown: ["M6 9l6 6 6-6"],
+  chevronUp: ["M18 15l-6-6-6 6"],
   bookmark: ["M5 3h14a1 1 0 011 1v17l-8-4-8 4V4a1 1 0 011-1z"],
+  lightbulb: ["M9 18h6", "M10 22h4", "M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z"],
+  arrowRight: ["M5 12h14", "M13 6l6 6-6 6"],
+  library: [
+    "M4 19V5a2 2 0 012-2h4v16H6a2 2 0 01-2-2z",
+    "M10 3h4v16h-4z",
+    "M14 3h4a2 2 0 012 2v12a2 2 0 01-2 2h-4V3z",
+  ],
+  zap: ["M13 2L3 14h9l-1 8 10-12h-9l1-8z"],
+  image: ["M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z", "M8.5 9.5h.01", "M21 15l-5-5L5 21"],
 };
 
 function Icon({ name, size = 20, color = "currentColor", strokeWidth = 1.8, style = {} }) {
@@ -143,936 +91,1198 @@ function Icon({ name, size = 20, color = "currentColor", strokeWidth = 1.8, styl
       style={{ flexShrink: 0, ...style }}
     >
       {paths.map((d, i) => (
-        <path key={i} d={d} />
+        <path key={`${name}-${i}`} d={d} />
       ))}
     </svg>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   DESIGN TOKENS
-   ═══════════════════════════════════════════════════════════════ */
-const C = {
-  bg: "#F2EBE1",
-  surface: "#FFFBF5",
-  surface2: "#F7F0E6",
-  surface3: "#FFF8EE",
-  line: "#DDD2C3",
-  lineLight: "#E8DECE",
-  text: "#2A231C",
-  textSecondary: "#5C5347",
-  muted: "#8A7E73",
-  accent: "#A0593A",
-  accentHover: "#B86D4A",
-  accentSoft: "#C28E6F",
-  accentBg: "#F5E6D8",
-  olive: "#5D6B53",
-  oliveBg: "#E8EDDF",
-  rust: "#904A36",
-  rustBg: "#F4DDD4",
-  navy: "#3B4A5E",
-  navyBg: "#DDE4ED",
-  sand: "#E3D3C0",
-  inkSoft: "#3E362E",
-  shadow: "0 1px 3px rgba(42,35,28,0.06), 0 4px 12px rgba(42,35,28,0.04)",
-  shadowLg: "0 2px 6px rgba(42,35,28,0.08), 0 8px 24px rgba(42,35,28,0.06)",
-};
-
-const radius = { sm: 12, md: 20, lg: 28, xl: 32 };
-
-/* ═══════════════════════════════════════════════════════════════
-   CONTENT DATA — Expanded depth
-   ═══════════════════════════════════════════════════════════════ */
-const featureGroups = [
-  {
-    title: "Core chat",
-    icon: "brain",
-    color: C.accent,
-    items: ["Conversational Q&A", "Model selection", "File uploads", "Prompt engineering", "Custom styles"],
-    note: "The foundation. Every interaction starts here: writing, thinking, drafting, rewriting, and question answering.",
-  },
-  {
-    title: "Persistent context",
-    icon: "folder",
-    color: C.olive,
-    items: ["Projects", "Project instructions", "Project knowledge", "RAG pipelines", "Cross-chat memory"],
-    note: "When you return to the same work repeatedly, persistent context prevents Claude from starting over every time.",
-  },
-  {
-    title: "Standalone deliverables",
-    icon: "sparkles",
-    color: C.rust,
-    items: ["Artifacts", "Word (.docx)", "PDF", "Excel (.xlsx)", "PowerPoint (.pptx)"],
-    note: "Move beyond chat replies. Create real documents, applications, charts, and files you can download and share.",
-  },
-  {
-    title: "Search and reasoning",
-    icon: "search",
-    color: C.navy,
-    items: ["Extended thinking", "Web search", "Deep research", "Source citations", "Real-time information"],
-    note: "Different tools for different depth levels. A quick fact check and a multi-source investigation require different modes.",
-  },
-  {
-    title: "Automation surfaces",
-    icon: "bot",
-    color: "#6B5B8D",
-    items: ["Cowork", "Cowork plugins", "Recurring tasks", "Claude in Chrome"],
-    note: "When Claude should act, not just answer. These surfaces let Claude execute across your desktop and browser.",
-  },
-  {
-    title: "Work integrations",
-    icon: "box",
-    color: "#5A7A6B",
-    items: ["Excel formulas", "Slide logic", "GitHub repos", "Connected context", "Cross-tool workflows"],
-    note: "Claude works inside the tools you already use. The real value is in files, decks, workbooks, and repositories.",
-  },
-];
-
-const learningPaths = [
-  {
-    id: "start",
-    label: "Start here",
-    icon: "graduation",
-    audience: "New users",
-    summary: "Understand what Claude is, what to click first, and how to get useful results immediately.",
-    steps: ["What Claude can do", "Which mode to choose", "Prompting fundamentals", "Uploading files", "Avoiding common mistakes"],
-    color: C.accent,
-  },
-  {
-    id: "daily",
-    label: "Daily work",
-    icon: "fileText",
-    audience: "Regular users",
-    summary: "Use Claude consistently for school, work, reports, analysis, and ongoing projects.",
-    steps: ["Projects setup", "Artifacts and files", "Memory configuration", "Style customization", "Shareable outputs", "Workflow patterns"],
-    color: C.olive,
-  },
-  {
-    id: "advanced",
-    label: "Advanced use",
-    icon: "terminal",
-    audience: "Power users",
-    summary: "Research, visual explanations, automation, structured control, and multi-tool orchestration.",
-    steps: ["Extended thinking", "Web search strategy", "Research mode", "Custom skills", "Cowork", "Claude in Chrome", "Office workflows"],
-    color: C.navy,
-  },
-];
-
-const modeRows = [
-  {
-    mode: "Normal chat",
-    icon: "brain",
-    bestFor: "Quick drafting, answering questions, rewriting, summarizing, and brainstorming.",
-    useWhen: "The job fits within one conversation and does not need persistent structure.",
-    avoidWhen: "You need durable context across sessions or a reusable deliverable.",
-    level: "Beginner",
-  },
-  {
-    mode: "Project",
-    icon: "folder",
-    bestFor: "Ongoing work with repeat instructions, a knowledge base, and stable context.",
-    useWhen: "You return to the same class, client, startup, or topic regularly.",
-    avoidWhen: "The task is one-off and does not need stored context.",
-    level: "Intermediate",
-  },
-  {
-    mode: "Artifact",
-    icon: "sparkles",
-    bestFor: "A document, app, chart, tool, or output you expect to refine, reuse, or share.",
-    useWhen: "The output should stand on its own outside the chat thread.",
-    avoidWhen: "You only need a short answer or inline explanation.",
-    level: "Beginner",
-  },
-  {
-    mode: "Extended thinking",
-    icon: "brain",
-    bestFor: "Hard reasoning, step-by-step planning, and complex multi-constraint tasks.",
-    useWhen: "The task is conceptually difficult, not just information-heavy.",
-    avoidWhen: "The question is straightforward and does not need deliberate reasoning depth.",
-    level: "Intermediate",
-  },
-  {
-    mode: "Web search",
-    icon: "search",
-    bestFor: "Current facts, live data, recent news, and real-time references.",
-    useWhen: "The answer depends on information that may have changed since training.",
-    avoidWhen: "You only want analysis of your own uploaded source files.",
-    level: "Beginner",
-  },
-  {
-    mode: "Research",
-    icon: "globe",
-    bestFor: "Broader, agentic investigation with multiple searches, citations, and systematic coverage.",
-    useWhen: "The question needs multiple angles and sources, not a single fact lookup.",
-    avoidWhen: "A fast direct answer or a one-search lookup would suffice.",
-    level: "Advanced",
-  },
-  {
-    mode: "Cowork",
-    icon: "layers",
-    bestFor: "Desktop task execution across local files, apps, and tools.",
-    useWhen: "The work is closer to a job flow than a conversational exchange.",
-    avoidWhen: "You only need an answer, not action on external systems.",
-    level: "Advanced",
-  },
-  {
-    mode: "Claude in Chrome",
-    icon: "browser",
-    bestFor: "Browser-side reading, form filling, navigation, and repetitive web tasks.",
-    useWhen: "The browser itself is the primary work surface.",
-    avoidWhen: "The task can be solved entirely inside chat without website interaction.",
-    level: "Advanced",
-  },
-];
-
-const compareCards = [
-  {
-    title: "Memory vs Projects vs Skills",
-    icon: "library",
-    color: C.olive,
-    rows: [
-      { label: "Memory", desc: "Your broader cross-chat preferences and facts. Carries forward automatically outside of Projects.", tag: "Passive" },
-      { label: "Projects", desc: "A persistent workspace with instructions and knowledge for one domain. Resets context per project.", tag: "Workspace" },
-      { label: "Skills", desc: "A reusable procedure Claude applies for a recurring task pattern. Narrower than a Project.", tag: "Procedure" },
-    ],
-  },
-  {
-    title: "Web search vs Thinking vs Research",
-    icon: "route",
-    color: C.navy,
-    rows: [
-      { label: "Web search", desc: "Fast current facts: one question, one lookup, real-time data.", tag: "Speed" },
-      { label: "Extended thinking", desc: "More deliberate internal reasoning before responding. No external data.", tag: "Depth" },
-      { label: "Research", desc: "Agentic multi-search investigation with citations and systematic coverage.", tag: "Breadth" },
-    ],
-  },
-  {
-    title: "Chat vs Artifact vs File",
-    icon: "pencilRuler",
-    color: C.rust,
-    rows: [
-      { label: "Chat reply", desc: "A conversational answer inside the thread. Ephemeral and inline.", tag: "Quick" },
-      { label: "Artifact", desc: "A standalone output in a dedicated panel, meant to be refined or reused.", tag: "Reusable" },
-      { label: "Exported file", desc: "A downloadable deliverable: Word, PDF, Excel, PowerPoint, or code.", tag: "Portable" },
-    ],
-  },
-];
-
-const modules = [
-  {
-    id: "what-claude-does",
-    title: "What Claude can do",
-    icon: "brain",
-    number: "01",
-    summary: "Claude is a general-purpose AI assistant that can analyze, write, code, create files, search the web, generate visuals, and assist across desktop and browser workflows.",
-    bullets: [
-      "Understand and analyze text, tables, uploaded documents, and images.",
-      "Create and edit Word, PDF, Excel, and PowerPoint files directly.",
-      "Build Artifacts: reports, diagrams, React applications, and shareable content.",
-      "Use Projects, memory, and styles for consistency across sessions.",
-      "Search the web and run deep Research flows with source citations.",
-      "Generate visual explanations, diagrams, charts, and interactive widgets.",
-    ],
-    proTip: "Treat Claude as a collaborator with tools, not a search engine. The more specific your deliverable request, the more useful the output.",
-    pitfall: "Asking a vague question and expecting Claude to guess the right format. Always specify what you want made.",
-    prompt: "Show me five things Claude can do for this exact task, ranked from simplest to most advanced.",
-  },
-  {
-    id: "pick-mode",
-    title: "Pick the right mode before you type",
-    icon: "wand",
-    number: "02",
-    summary: "Many bad results come from using the wrong surface, not from writing the wrong prompt. Choosing the right mode matters more than phrasing alone.",
-    bullets: [
-      "Normal chat: Quick one-off exchanges, brainstorming, and inline answers.",
-      "Projects: Recurring work domains with stable instructions and knowledge.",
-      "Artifacts: Standalone outputs meant to be refined, downloaded, or shared.",
-      "Research: Multi-angle investigation requiring citations and systematic coverage.",
-      "Cowork or Chrome: When Claude should take action across tools or web pages.",
-    ],
-    proTip: "Ask Claude directly: 'Which mode is best for this task?' before diving into the work.",
-    pitfall: "Using normal chat for work that should live in a Project. You end up repeating context in every new conversation.",
-    prompt: "Before answering, tell me which Claude mode is best for this task and why.",
-  },
-  {
-    id: "prompt-better",
-    title: "Prompt better in one minute",
-    icon: "target",
-    number: "03",
-    summary: "The fastest way to improve Claude's output: specify the deliverable, the allowed source, the audience, and the final format. That alone fixes a large share of weak results.",
-    bullets: [
-      "State what you want made, not just what topic you care about.",
-      "Specify what sources Claude should use (uploads only, web search, or both).",
-      "Name the audience: beginner, executive, technical peer, or general reader.",
-      "Define the final form: memo, table, script, checklist, slide outline, or study guide.",
-      "Set constraints: word count, tone, structure, or exclusions.",
-    ],
-    proTip: "The format of your prompt should mirror the format of the output you want. Want a table? Show a table skeleton. Want structured sections? Use headers in your prompt.",
-    pitfall: "Writing 'tell me about X' with no format, source, or audience specification, then being disappointed by generic paragraphs.",
-    prompt: "Use only the uploaded source. Write a concise study guide for a beginner, structured as a numbered checklist, under 500 words. Add three likely follow-up questions at the end.",
-  },
-  {
-    id: "files-artifacts",
-    title: "Files and Artifacts",
-    icon: "sparkles",
-    number: "04",
-    summary: "When the result should become something you keep, edit, share, or download, move beyond plain chat. This is where Claude becomes useful for real work.",
-    bullets: [
-      "Use Artifacts when the output should stand on its own: reports, apps, charts, interactive tools.",
-      "Use file creation when you need a real document (.docx), workbook (.xlsx), or slide deck (.pptx).",
-      "Artifacts render live in the conversation; files are downloaded separately.",
-      "You can iterate on an Artifact across multiple messages in the same conversation.",
-      "Ask Claude whether something should remain chat-only or become an Artifact or file.",
-    ],
-    proTip: "Start with an Artifact for fast iteration, then export to a file format once the content is finalized.",
-    pitfall: "Keeping everything in chat and then struggling to extract the final version later.",
-    prompt: "Turn this into a clean Artifact first. Then tell me whether it should also be exported as Word, PDF, Excel, or PowerPoint, and why.",
-  },
-  {
-    id: "projects-memory",
-    title: "Projects, memory, and styles",
-    icon: "folder",
-    number: "05",
-    summary: "These three features are often confused. Projects organize a workspace. Memory stores broader context. Styles control how Claude speaks. Keeping them separate makes Claude easier to control.",
-    bullets: [
-      "Projects: A persistent workspace for one domain. Includes custom instructions and uploaded knowledge files.",
-      "Memory: Broader personal context that carries across non-project chats. Updated passively or by request.",
-      "Styles: Controls Claude's tone and presentation — concise, formal, explanatory, or custom.",
-      "Project instructions override memory when they conflict.",
-      "You can have multiple Projects for different work domains running in parallel.",
-    ],
-    proTip: "Write project instructions like you are onboarding a new team member: role, constraints, preferred output formats, and explicit exclusions.",
-    pitfall: "Putting everything into memory instead of using a Project. Memory is for broad preferences, not domain-specific work instructions.",
-    prompt: "Separate this setup into three categories: what belongs in project instructions, what should be stored in memory, and what is a style preference.",
-  },
-  {
-    id: "skills",
-    title: "Skills",
-    icon: "zap",
-    number: "06",
-    summary: "Skills are reusable task procedures. They are not topic libraries. A Skill tells Claude how to do one kind of recurring work more reliably, every time.",
-    bullets: [
-      "Best for repeatable workflows: weekly reports, code reviews, content formatting, data cleaning.",
-      "Keep them narrower than Projects. One Skill, one task type.",
-      "Strong Skills include: scope definition, input/output examples, and clear boundaries on what not to do.",
-      "Skills can be attached to Projects or used independently.",
-      "Version and test Skills over time — the first version is rarely the best.",
-    ],
-    proTip: "Include a negative example in your Skill: 'Do NOT do this.' Negative boundaries are often more useful than positive instructions.",
-    pitfall: "Making a Skill too broad. A 'writing skill' is too vague. A 'weekly status report from Jira tickets' is well-scoped.",
-    prompt: "Design a Skill for this recurring task. Include: when to use it, when not to use it, the expected input format, and one example input-output pair.",
-  },
-  {
-    id: "search-research",
-    title: "Search, extended thinking, and Research",
-    icon: "search",
-    number: "07",
-    summary: "These are different tools, not synonyms. Search retrieves current information. Extended thinking deepens reasoning. Research runs a multi-source investigation. Using the wrong one wastes time.",
-    bullets: [
-      "Web search: For current facts, live data, quick verifications. One question, one lookup.",
-      "Extended thinking: For harder reasoning, planning, and step-by-step analysis. No external data, just deeper processing.",
-      "Research: For broader agentic investigation. Multiple searches, cross-referencing, citations, and systematic coverage.",
-      "Combine them only when the task genuinely requires both current data and deep analysis.",
-      "Research is slower and uses more capacity. Do not use it for simple questions.",
-    ],
-    proTip: "If you need a single current fact, use web search. If you need a full literature-style review, use Research. If you need Claude to think harder about something you already provided, use extended thinking.",
-    pitfall: "Using Research to look up a single fact. That is a web search task, and Research will be slower for no benefit.",
-    prompt: "Tell me whether this task needs web search, extended thinking, Research, or just normal chat. Explain your reasoning in one paragraph.",
-  },
-  {
-    id: "visuals",
-    title: "Visual explanations",
-    icon: "eye",
-    number: "08",
-    summary: "Long paragraphs are often the worst teaching medium. Claude can generate diagrams, charts, comparisons, and interactive visuals when a concept is easier to see than to read.",
-    bullets: [
-      "Ask for a diagram when the concept involves structure, hierarchy, or relationships.",
-      "Ask for a chart when a pattern or trend matters more than a narrative.",
-      "Ask for a side-by-side comparison when the reader needs to scan and decide quickly.",
-      "Claude generates SVG diagrams and HTML widgets, not photographic images.",
-      "Combine visuals with concise text: diagram first, explanation second.",
-    ],
-    proTip: "Say 'explain this visually first, then in text' to get the diagram before the prose. Claude defaults to text otherwise.",
-    pitfall: "Asking Claude for a 'picture' when you mean a diagram. Be specific about the visual format you want: flowchart, Venn diagram, comparison table, bar chart, or timeline.",
-    prompt: "Explain this concept with a diagram first, then a short legend, then a concise written explanation of no more than three paragraphs.",
-  },
-  {
-    id: "share-privacy",
-    title: "Sharing and privacy controls",
-    icon: "share",
-    number: "09",
-    summary: "Claude supports shareable chat snapshots, artifact sharing, and incognito mode. The right privacy setting is part of good workflow design, not an afterthought.",
-    bullets: [
-      "All chats are private by default. Nothing is shared unless you explicitly share it.",
-      "Shared chats are static snapshots, not live collaborative threads.",
-      "Incognito chats are not saved to history or used for memory.",
-      "Clean up a thread before sharing: remove test messages, clarify the final answer.",
-      "Projects can be shared with team members on supported plans.",
-    ],
-    proTip: "Start a clean new chat for the final version of anything you plan to share. Sharing a messy exploratory thread undermines the output.",
-    pitfall: "Sharing a raw conversation with 15 back-and-forth iterations. The recipient sees confusion, not clarity.",
-    prompt: "Make this conversation share-ready: keep only the final logic, clean up the wording, and flag anything that should stay private.",
-  },
-  {
-    id: "automation",
-    title: "Cowork, Chrome, and advanced surfaces",
-    icon: "layers",
-    number: "10",
-    summary: "These surfaces exist for when Claude should act, not just answer. Use them when the real work happens across files, desktop tools, or web pages.",
-    bullets: [
-      "Cowork: Deeper desktop task execution. Claude works with your files and local tools directly.",
-      "Claude in Chrome: Browser-based reading, navigation, form filling, and repetitive web tasks.",
-      "Cowork plugins extend Claude's reach into specific applications and data sources.",
-      "Use these when the task involves action on external systems, not just generating text.",
-      "Normal chat remains better for pure thinking, drafting, and analysis tasks.",
-    ],
-    proTip: "Start the task in normal chat to plan, then move to Cowork or Chrome to execute. Planning and execution benefit from different surfaces.",
-    pitfall: "Trying to do everything in Cowork when a simple chat prompt would have been faster and more reliable.",
-    prompt: "Would this task be better handled in Cowork, Claude in Chrome, or normal chat? Explain the tradeoff for each and recommend one.",
-  },
-  {
-    id: "office",
-    title: "Excel and PowerPoint workflows",
-    icon: "grid",
-    number: "11",
-    summary: "Claude works inside the tools you already use. For many users, the real question is not whether Claude can help, but whether it should work directly inside the workbook or deck.",
-    bullets: [
-      "Excel: Claude can build models, write formulas, create charts, clean data, and structure analysis.",
-      "PowerPoint: Claude can generate slide outlines, improve flow, add speaker notes, and restructure decks.",
-      "Always ask Claude to explain the file first before it edits. Blind edits on complex business files are risky.",
-      "Use file creation to build new workbooks and decks. Use integrations to modify existing ones.",
-      "Combine with web search for competitive data or market context to enrich the deliverable.",
-    ],
-    proTip: "Ask Claude to audit the file before editing: 'Explain this workbook's structure and identify the three highest-risk issues before making changes.'",
-    pitfall: "Letting Claude edit a complex financial model without reviewing its plan first. Always ask for the plan, then approve the edits.",
-    prompt: "Explain the workbook or deck structure first. Identify the highest-risk issues. Only then suggest edits, and explain each one.",
-  },
-  {
-    id: "mistakes",
-    title: "Common mistakes and fast fixes",
-    icon: "alertTriangle",
-    number: "12",
-    summary: "Most poor results come from a small set of repeatable errors. Recognizing and fixing them is the fastest path to better outputs.",
-    bullets: [
-      "Using chat when the task needed a Project with persistent instructions.",
-      "Using Research for a simple factual lookup that web search handles in seconds.",
-      "Writing vague prompts with no specified output format, audience, or source constraints.",
-      "Forgetting privacy controls before sharing a conversation externally.",
-      "Relying on long paragraphs when a diagram, table, or chart would communicate faster.",
-    ],
-    proTip: "After getting a weak result, ask: 'Did I use the right mode? Did I specify the format? Did I name the audience?' One of these is usually the fix.",
-    pitfall: "Blaming the model when the real issue was an underspecified prompt or the wrong mode selection.",
-    prompt: "Review my current workflow and tell me which Claude feature I am probably underusing or misusing. Be direct.",
-  },
-];
-
-const mistakes = [
-  { problem: "I keep repeating the same context every session.", fix: "Move the work into a Project with stored instructions, or save stable preferences in memory.", icon: "folder" },
-  { problem: "Claude's answers feel too generic and surface-level.", fix: "Add a concrete output format, specify your sources, and name the audience.", icon: "target" },
-  { problem: "I want a polished deliverable, not just a chat reply.", fix: "Ask for an Artifact or request a downloadable file (.docx, .pdf, .xlsx, .pptx).", icon: "sparkles" },
-  { problem: "I need current, up-to-date information.", fix: "Enable web search or use Research mode instead of relying on static model knowledge.", icon: "globe" },
-  { problem: "The explanation is too long and hard to follow.", fix: "Request a diagram, chart, comparison table, or visual summary before the prose.", icon: "eye" },
-  { problem: "I do the same kind of task every week and results vary.", fix: "Create a Skill with a clear procedure, examples, and boundaries.", icon: "zap" },
-];
-
-const promptLibrary = [
-  { text: "Tell me which Claude mode fits this task best before you answer.", tag: "Mode" },
-  { text: "Use only the uploaded source. Separate facts from inferences.", tag: "Source" },
-  { text: "Turn this into an Artifact, then tell me whether it should also be exported as a file.", tag: "Output" },
-  { text: "Search our previous conversations for this topic and summarize decisions and next steps.", tag: "Memory" },
-  { text: "Explain this with a diagram first, then a concise written explanation underneath.", tag: "Visual" },
-  { text: "Tell me whether this task needs web search, extended thinking, or Research.", tag: "Mode" },
-  { text: "Design a Skill for this recurring task with examples, limits, and one input-output pair.", tag: "Skill" },
-  { text: "Review this answer like a skeptical editor. Point out anything vague, weak, or unsupported.", tag: "Quality" },
-  { text: "Make this conversation share-ready and flag anything that should stay private.", tag: "Privacy" },
-  { text: "Explain the workbook or deck first, identify the highest-risk issues, then suggest edits.", tag: "Office" },
-];
-
-/* ═══════════════════════════════════════════════════════════════
-   GLOBAL STYLES (injected once)
-   ═══════════════════════════════════════════════════════════════ */
 function GlobalStyles() {
   useEffect(() => {
-    if (document.getElementById("claude-guide-styles")) return;
+    if (document.getElementById("claude-guide-styles-v5")) return;
     const style = document.createElement("style");
-    style.id = "claude-guide-styles";
+    style.id = "claude-guide-styles-v5";
     style.textContent = `
-      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
-      .cg-root * { box-sizing: border-box; }
-      .cg-root { font-family: 'DM Sans', sans-serif; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-      .cg-root h1,.cg-root h2,.cg-root h3,.cg-root h4 { font-family: 'Outfit', sans-serif; line-height: 1.2; }
-      .cg-root button { cursor: pointer; font-family: inherit; }
-      .cg-root table { border-collapse: separate; border-spacing: 0; }
-      .cg-root [id^="section-"] { scroll-margin-top: 72px; }
-      .cg-card { transition: box-shadow 0.2s ease, transform 0.15s ease; }
-      .cg-card:hover { box-shadow: 0 2px 8px rgba(42,35,28,0.1), 0 8px 24px rgba(42,35,28,0.06); }
-      .cg-expand { overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }
-      .cg-tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
-      .cg-section-num { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 48px; line-height: 1; opacity: 0.07; position: absolute; top: -8px; right: 16px; pointer-events: none; }
-      @media (max-width: 768px) {
-        .cg-hide-mobile { display: none !important; }
-        .cg-section-num { font-size: 36px; }
+      @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+      * { box-sizing: border-box; }
+      .cg-shell { font-family: 'DM Sans', system-ui, sans-serif; }
+      .cg-display { font-family: 'Fraunces', Georgia, serif; }
+      .cg-mono { font-family: 'JetBrains Mono', monospace; }
+      .cg-shell input, .cg-shell button { font-family: inherit; }
+      .cg-shell [id^="section-"] { scroll-margin-top: 96px; }
+      .cg-scroll-hide { scrollbar-width: none; }
+      .cg-scroll-hide::-webkit-scrollbar { display: none; }
+      .cg-wrap-anywhere { overflow-wrap: anywhere; word-break: break-word; }
+      .cg-code-card { overflow-wrap: anywhere; word-break: break-word; }
+      .cg-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .cg-reference-row { display: grid; grid-template-columns: 120px 140px 1fr; gap: 12px; align-items: start; }
+      .cg-nav-button { min-width: max-content; }
+      .cg-svg { max-width: 100%; height: auto; }
+      @media (max-width: 960px) {
+        .cg-grid-hero, .cg-grid-2, .cg-grid-3, .cg-grid-4 { grid-template-columns: 1fr !important; }
+      }
+      @media (max-width: 840px) {
+        .cg-sticky-desktop { display: none !important; }
+      }
+      @media (max-width: 720px) {
+        .cg-reference-row { grid-template-columns: 1fr; gap: 6px; }
+        .cg-toolbar { flex-direction: column; align-items: stretch !important; }
+        .cg-toolbar-search { min-width: 0 !important; width: 100% !important; }
+        .cg-chip-row { width: 100%; overflow-x: auto; flex-wrap: nowrap !important; padding-bottom: 2px; }
+        .cg-chip-row button { flex: 0 0 auto; }
+      }
+      @media (max-width: 640px) {
+        .cg-card-pad { padding: 18px !important; }
+        .cg-heading-lg { font-size: 22px !important; }
+        .cg-heading-xl { font-size: 28px !important; }
       }
     `;
     document.head.appendChild(style);
-    return () => { style.remove(); };
+    return () => style.remove();
   }, []);
   return null;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SMALL COMPONENTS
-   ═══════════════════════════════════════════════════════════════ */
-function Badge({ children, color = C.accent, bg = C.accentBg }) {
+const C = {
+  cream: "#FBF6EF",
+  creamDark: "#F3EADF",
+  creamWarm: "#F8EEE2",
+  paper: "#FFFaf4",
+  ink: "#1E1A17",
+  inkLight: "#685E55",
+  inkMuted: "#988A7E",
+  border: "#E5D8C9",
+  borderLight: "#EFE3D7",
+  copperDeep: "#6B3B2A",
+  copper: "#A0593A",
+  copperLight: "#F4E3D7",
+  clay: "#B2643D",
+  rose: "#B5484B",
+  navy: "#3B4A5E",
+  purple: "#6549A8",
+  gold: "#C08A2E",
+  shadow: "0 1px 3px rgba(30,26,23,0.06), 0 4px 14px rgba(30,26,23,0.04)",
+  shadowLg: "0 2px 8px rgba(30,26,23,0.08), 0 10px 28px rgba(30,26,23,0.06)",
+};
+
+const VERIFIED_DATE = "March 17, 2026";
+
+const LEVELS = [
+  { key: "all", label: "All" },
+  { key: "foundation", label: "Foundation" },
+  { key: "core", label: "Core" },
+  { key: "power", label: "Power" },
+  { key: "expert", label: "Expert" },
+];
+
+const PRINCIPLES = [
+  { ico: "target", title: "Choose the right surface", desc: "Mode selection matters more than clever wording." },
+  { ico: "lightbulb", title: "Ask clearly", desc: "State the goal, context, constraints, and final output." },
+  { ico: "search", title: "Search when facts move", desc: "Use the live web for anything current, regulated, or changeable." },
+  { ico: "sparkles", title: "Make real outputs", desc: "Turn important work into artifacts or files you can actually use." },
+  { ico: "layers", title: "Separate planning from action", desc: "Chat for thinking. Cowork, Chrome, or Code for execution." },
+  { ico: "eye", title: "Use visuals when they help", desc: "Tables, diagrams, and maps often explain faster than prose." },
+];
+
+const TOOL_CHOOSER = [
+  { goal: "Quick answer, rewrite, or draft", tool: "Normal Chat", ico: "bookOpen", reason: "Best for fast one off work." },
+  { goal: "Current fact, recent policy, latest product change", tool: "Web Search", ico: "globe", reason: "Use when reality may have changed." },
+  { goal: "Ongoing class, client, or startup workflow", tool: "Project", ico: "folderOpen", reason: "Keeps files, instructions, and related chats together." },
+  { goal: "Standalone output you will refine or share", tool: "Artifact", ico: "sparkles", reason: "Better than burying the final result in chat." },
+  { goal: "Broad, sourced investigation", tool: "Research", ico: "search", reason: "Designed for multi source synthesis and citations." },
+  { goal: "Desktop execution across files and apps", tool: "Cowork", ico: "layers", reason: "Best when the task is a workflow, not a sentence." },
+  { goal: "Browser side reading, navigation, or form work", tool: "Claude in Chrome", ico: "workflow", reason: "Use when the website itself is the work surface." },
+  { goal: "Repository, terminal, tests, refactors, or code review", tool: "Claude Code", ico: "code", reason: "Built for terminal first coding and codebase native work." },
+];
+
+const PROMPT_BLOCKS = [
+  { label: "Goal", example: "Create a practical guide for general Claude users.", color: C.clay },
+  { label: "Context", example: "Cover modern Claude surfaces, not just basic chat.", color: C.copper },
+  { label: "Constraints", example: "User facing tone. Use tables and diagrams. Keep it readable.", color: C.purple },
+  { label: "Output", example: "Decision table, feature map, detailed sections, and quick reference prompts.", color: C.navy },
+  { label: "Quality", example: "Separate current facts from stable concepts. Flag surface specific limits.", color: C.rose },
+  { label: "Verify", example: "Check official Anthropic docs for features that may have changed.", color: C.gold },
+];
+
+const CORE_FEATURES = [
+  { title: "Projects", ico: "folderOpen", color: C.copper, description: "Persistent workspaces with project instructions, files, and focused chats.", when: "Use for any recurring domain of work." },
+  { title: "Artifacts", ico: "sparkles", color: C.clay, description: "Standalone outputs that can be refined, shared, and reused.", when: "Use when the answer should become an object." },
+  { title: "File Creation", ico: "fileText", color: C.navy, description: "Create Word, PDF, Excel, and PowerPoint files directly.", when: "Use when the deliverable format matters." },
+  { title: "Memory", ico: "library", color: C.gold, description: "Broader cross chat preferences and continuity outside projects.", when: "Use for stable personal preferences and recurring context." },
+  { title: "Skills", ico: "zap", color: C.purple, description: "Reusable task procedures for repeated workflows.", when: "Use when a task pattern repeats often." },
+  { title: "Web Search", ico: "search", color: "#0284c7", description: "Pulls live information and cites sources.", when: "Use for anything current or changeable." },
+  { title: "Research", ico: "globe", color: "#4338ca", description: "Broader multi source investigation with citations.", when: "Use for reports, not quick facts." },
+  { title: "Custom Visuals", ico: "image", color: "#c026d3", description: "Inline diagrams, charts, and interactive visuals.", when: "Use when a concept is easier to see than to read." },
+  { title: "Cowork", ico: "layers", color: "#7c3aed", description: "Desktop execution for knowledge work across files, apps, plugins, and scheduled tasks.", when: "Use when the job is a workflow, not just a prompt." },
+  { title: "Claude in Chrome", ico: "workflow", color: "#0f766e", description: "Browser side reading, navigation, and web task execution.", when: "Use when the site itself is the working context." },
+  { title: "Claude Code", ico: "code", color: "#374151", description: "Terminal first coding surface for repos, tests, refactors, and code review.", when: "Use when the real work lives in a codebase." },
+];
+
+const SURFACE_MATRIX = [
+  { surface: "Normal Chat", best: "Fast questions, drafting, and rewriting", strengths: "Low friction and flexible", limits: "Weak for persistent context" },
+  { surface: "Projects", best: "Ongoing domains of work", strengths: "Persistent instructions and files", limits: "Not ideal for one off jobs" },
+  { surface: "Artifacts", best: "Standalone deliverables", strengths: "Reusable and visible", limits: "Still tied to a conversation" },
+  { surface: "Web Search", best: "Current facts", strengths: "Live information", limits: "Not a deep research workflow by itself" },
+  { surface: "Research", best: "Broader sourced investigation", strengths: "Multiple searches and citations", limits: "Slower and heavier than search" },
+  { surface: "Cowork", best: "Desktop knowledge work execution", strengths: "Works across files and tools", limits: "Needs active scope control" },
+  { surface: "Claude in Chrome", best: "Browser native workflows", strengths: "Reads pages and acts in context", limits: "Browser permissions and website risk" },
+  { surface: "Claude Code", best: "Terminal and repo native coding", strengths: "Reads codebase, edits files, runs commands", limits: "Not the right tool for non code knowledge work" },
+];
+
+const ACTION_TRIAGE = [
+  {
+    title: "Cowork",
+    color: C.purple,
+    best: "Desktop knowledge work across local files, connectors, plugins, and recurring tasks.",
+    useWhen: "The task is a multi step workflow and not centered on a browser page or a repo.",
+    avoidWhen: "The core object is a codebase or the browser tab itself.",
+  },
+  {
+    title: "Claude in Chrome",
+    color: "#0f766e",
+    best: "Browser native tasks where page context, navigation, or form interaction matters.",
+    useWhen: "The work lives inside websites and page state matters.",
+    avoidWhen: "A quick search would be enough or the real work is repo based.",
+  },
+  {
+    title: "Claude Code",
+    color: C.navy,
+    best: "Terminal first coding, repository understanding, debugging, refactoring, and PR prep.",
+    useWhen: "The main object is a codebase, shell, tests, or build pipeline.",
+    avoidWhen: "The job is broad knowledge work without a repo at the center.",
+  },
+];
+
+const COWORK_PLAYBOOKS = [
+  {
+    title: "Daily or weekly report generation",
+    when: "You need recurring work across files, connectors, or web sources.",
+    flow: ["Open Cowork", "State the output and cadence", "Install the right tool if needed", "Use /schedule for recurring runs", "Review every run like a real report"],
+    risks: ["Leaving a scheduled task running after the job changed", "Letting task scope expand silently", "Giving access to more files than needed"],
+  },
+  {
+    title: "Research across sources",
+    when: "You need Claude to search connected sources, the web, and local material in one task.",
+    flow: ["Define the question and output", "Limit the sources", "Ask for a plan first", "Approve the plan", "Require a report with open questions"],
+    risks: ["Searching too broadly", "Mixing internal and external facts without labels", "Skipping source review"],
+  },
+  {
+    title: "Recurring knowledge work",
+    when: "The task repeats often enough that manual execution is wasteful.",
+    flow: ["Start with a one off Cowork task", "Refine the prompt", "Turn it into a scheduled task", "Pause or delete it when the workflow changes"],
+    risks: ["Automating an immature process too early", "Failing to review output quality over time", "Over trusting tools and connected sources"],
+  },
+];
+
+const COWORK_ECOSYSTEM = [
+  { node: "Cowork", desc: "The main workspace inside Claude Desktop for multi step knowledge work.", tag: "Core", color: C.purple },
+  { node: "Extra tools", desc: "Add actions or deeper app behaviors inside Cowork flows.", tag: "Action", color: C.clay },
+  { node: "Connected sources", desc: "Bring outside context into the workflow so Cowork can work with that information.", tag: "Context", color: C.copper },
+  { node: "Recurring runs", desc: "Repeat a mature Cowork flow on a schedule after the one off version is already stable.", tag: "Automation", color: C.navy },
+  { node: "Finished output", desc: "Reports, briefs, summaries, and artifacts that still need to be reviewed like real work.", tag: "Output", color: C.gold },
+];
+
+const CLAUDE_CODE_COOKBOOK = [
+  {
+    lane: "Repo onboarding lane",
+    icon: "library",
+    color: C.copper,
+    objective: "Understand an unfamiliar repo before touching code.",
+    triggers: ["New codebase", "Inherited project", "Returning after a long gap"],
+    steps: ["Map entry points", "Identify core modules", "Trace request or execution flow", "Find highest risk areas", "Write down what is still unclear"],
+    prompts: [
+      "Give me a high level overview of this codebase.",
+      "Map the entry points, core modules, and likely request flow.",
+      "What are the three highest risk areas to understand before editing anything?",
+    ],
+    outputs: ["Repo map", "Risk list", "Open questions"],
+  },
+  {
+    lane: "Bug triage lane",
+    icon: "alertTriangle",
+    color: C.rose,
+    objective: "Move from symptom to the smallest safe fix with evidence.",
+    triggers: ["Failing test", "Broken route", "Regression report"],
+    steps: ["Describe the failure path", "Rank likely root causes", "Verify the most likely one", "Propose the smallest safe patch", "Run or update tests"],
+    prompts: [
+      "Reproduce the bug path conceptually before changing code.",
+      "Rank likely root causes and tell me what evidence would confirm each.",
+      "Propose the smallest safe fix first, with tests.",
+    ],
+    outputs: ["Root cause shortlist", "Patch", "Validation summary"],
+  },
+  {
+    lane: "Refactor lane",
+    icon: "sparkles",
+    color: C.purple,
+    objective: "Improve clarity and structure without changing behavior.",
+    triggers: ["Hard to read module", "Growing technical debt", "Duplication"],
+    steps: ["State invariants", "Define the refactor boundary", "Make the structural change", "Run or update tests", "Summarize what stayed the same"],
+    prompts: [
+      "Refactor this module for clarity without changing behavior.",
+      "List the invariants you must preserve before editing.",
+      "Tell me what changed structurally and what stayed behaviorally identical.",
+    ],
+    outputs: ["Refactored code", "Invariant list", "Diff explanation"],
+  },
+  {
+    lane: "PR lane",
+    icon: "fileText",
+    color: C.navy,
+    objective: "Turn a code change into a ship ready unit of work.",
+    triggers: ["Ready to merge", "Need reviewer context", "Need concise delivery notes"],
+    steps: ["Summarize the change", "List touched files", "Call out risks", "State follow up work", "Flag human review points"],
+    prompts: [
+      "Summarize this change as if writing a PR description.",
+      "Highlight touched files, risks, and follow up work.",
+      "Point out what still needs human review before merge.",
+    ],
+    outputs: ["PR description", "Risk notes", "Reviewer checklist"],
+  },
+  {
+    lane: "MCP lane",
+    icon: "workflow",
+    color: C.clay,
+    objective: "Extend Claude Code with outside tools or data sources in a controlled way.",
+    triggers: ["Need issue tracker context", "Need external docs", "Need tool based actions"],
+    steps: ["Define why MCP is actually needed", "Choose the minimum server set", "Configure MCP", "Test it in a narrow task", "Document how the repo should use it"],
+    prompts: [
+      "Tell me whether this task truly needs MCP or can stay repo local.",
+      "Recommend the minimum MCP setup for this workflow.",
+      "Document how this repo should use MCP and where it must not rely on it.",
+    ],
+    outputs: ["MCP plan", "Configured server path", "Usage policy"],
+  },
+];
+
+const CLAUDE_CODE_PLAYBOOKS = [
+  {
+    title: "Understand an unfamiliar codebase",
+    prompts: [
+      "Give me a high level overview of this codebase.",
+      "Map the main entry points, core modules, and likely request flow.",
+      "Show me the highest risk areas to understand before editing anything.",
+    ],
+    useWhen: "You are new to a repository or returning after a gap.",
+    why: "This prevents blind edits.",
+  },
+  {
+    title: "Fix a bug with evidence before code changes",
+    prompts: [
+      "Reproduce the bug path conceptually before changing code.",
+      "Trace likely root causes and rank them.",
+      "Propose the smallest fix first, with tests.",
+    ],
+    useWhen: "You need controlled debugging rather than speculative rewrites.",
+    why: "Claude Code is strongest when it reasons, traces, and then patches.",
+  },
+  {
+    title: "Refactor with guardrails",
+    prompts: [
+      "Refactor this module for clarity without changing behavior.",
+      "List the invariants you must preserve before editing.",
+      "Run or update tests after the refactor and summarize what changed.",
+    ],
+    useWhen: "You want maintainability gains without scope creep.",
+    why: "Refactors fail when behavioral boundaries are missing.",
+  },
+  {
+    title: "Prepare a PR ready change",
+    prompts: [
+      "Make the code change, then summarize it as if writing a PR description.",
+      "Highlight risks, touched files, and follow up work.",
+      "Point out what still needs human review.",
+    ],
+    useWhen: "You want the output to fit directly into team workflow.",
+    why: "This turns coding into shipping, not just editing.",
+  },
+];
+
+const CLAUDE_CODE_REFERENCE = [
+  { label: "Core entry", value: "claude", note: "Start an interactive Claude Code session in the project root." },
+  { label: "Config UI", value: "/config", note: "Open Claude Code settings from the interactive REPL." },
+  { label: "MCP", value: "claude mcp", note: "Configure Model Context Protocol servers for tools and data sources." },
+  { label: "Agents", value: "claude agents", note: "List configured subagents grouped by source." },
+  { label: "Auth status", value: "claude auth status", note: "Check whether Claude Code is authenticated." },
+  { label: "Project guide", value: "CLAUDE.md", note: "Use a repo local file to shape how Claude Code should work in that codebase." },
+  { label: "Skills", value: "SKILL.md", note: "Create a skill file so Claude Code can load reusable procedures." },
+  { label: "Remote Control", value: "claude.ai/code", note: "Continue a local Claude Code session from browser or mobile while it is still running locally." },
+];
+
+const GUIDE_SECTIONS = [
+  {
+    id: "mental-model",
+    level: "foundation",
+    number: "01",
+    title: "Start with the right mental model",
+    ico: "brain",
+    color: C.copper,
+    summary: "Claude is not one feature. It is a set of surfaces. Results usually improve when you choose the right surface first and then write a clear task brief.",
+    whyItMatters: "A lot of weak results come from using the wrong surface or skipping verification, not from bad prompts alone.",
+    beginnerMoves: ["Assume the first answer is a draft.", "Ask which surface fits the task first.", "Name the deliverable, audience, and source boundaries."],
+    advancedMoves: ["Separate planning, production, critique, and packaging.", "Move important work into Projects or Artifacts early.", "Use live search whenever facts may have changed."],
+    commonMistakes: ["Treating every task like a normal chat.", "Expecting current accuracy without search.", "Confusing Memory, Projects, and Skills."],
+    promptExamples: [
+      { prompt: "Before answering, tell me which Claude surface is best for this task and why.", why: "It forces routing before generation." },
+      { prompt: "Use only the uploaded file. Separate explicit facts from inference.", why: "It adds source discipline." },
+      { prompt: "What assumptions did you make, and which ones are weakest?", why: "It adds self review." },
+    ],
+    beforeAfter: {
+      before: "Tell me about Claude.",
+      after: "Create a practical user guide to Claude that covers major surfaces, when to use each one, common mistakes, and a mode selection table. Use visual structure, not long blocks of prose.",
+      improvement: "The stronger version defines scope, audience, deliverable, and presentation style.",
+    },
+    visual: "mental",
+  },
+  {
+    id: "surface-map",
+    level: "foundation",
+    number: "02",
+    title: "See the full Claude stack before going deeper",
+    ico: "layers",
+    color: C.clay,
+    summary: "A complete guide should show the full Claude stack: chat, Projects, Artifacts, file creation, Memory, Skills, web search, Research, custom visuals, Cowork, Claude in Chrome, and Claude Code.",
+    whyItMatters: "If Cowork and Claude Code are missing, the guide is incomplete.",
+    beginnerMoves: ["Learn chat, Projects, and Artifacts first.", "Then learn search, Research, and visuals.", "Only then move to Cowork, Chrome, and Claude Code."],
+    advancedMoves: ["Think in layers: conversation, workspace, deliverable, action surface, and coding surface.", "Use one surface for thought and another for execution.", "Do not collapse all work into one chat thread."],
+    commonMistakes: ["Calling Claude just a chatbot.", "Ignoring surface specific strengths.", "Trying to use Claude Code for non code knowledge work."],
+    promptExamples: [
+      { prompt: "Map this task across chat, Projects, Artifacts, Cowork, Chrome, and Claude Code.", why: "It creates a surface aware plan." },
+      { prompt: "What should stay in a Project and what should move to Claude Code?", why: "It separates knowledge work from repo work." },
+    ],
+    beforeAfter: {
+      before: "Claude is a chatbot with file support.",
+      after: "Claude is a multi surface system for conversation, persistent workspaces, standalone deliverables, current information retrieval, desktop execution, browser workflows, and terminal native coding.",
+      improvement: "This reflects the product more accurately.",
+    },
+    visual: "layers",
+  },
+  {
+    id: "cowork-guide",
+    level: "expert",
+    number: "03",
+    title: "How to use Claude Cowork well",
+    ico: "layers",
+    color: C.purple,
+    summary: "Cowork is the desktop action surface for knowledge work beyond coding. It lets Claude work across files, apps, web context, extra tools, connected sources, and recurring tasks.",
+    whyItMatters: "You need to know when Cowork is better than chat and how to keep its scope under control.",
+    beginnerMoves: ["Use Cowork when the job is a workflow, not just a reply.", "Start with a clear goal, output format, and scope limit.", "Ask for a plan before broad execution."],
+    advancedMoves: ["Install only the tools and sources you actually need.", "Use /schedule after the one off version is stable.", "Review each scheduled run like real work."],
+    commonMistakes: ["Giving access to more files than needed.", "Automating a workflow before the prompt is stable.", "Watching only the final answer instead of the task scope."],
+    promptExamples: [
+      { prompt: "Plan this Cowork task first. Tell me what files, tools, websites, and outputs you expect to touch. Wait for approval before you start.", why: "It adds a review gate before execution." },
+      { prompt: "Convert this one off Cowork task into a weekly scheduled report. Keep the scope narrow and include a quality checklist at the end.", why: "It moves from manual execution to repeatable automation." },
+    ],
+    beforeAfter: {
+      before: "Use Cowork to help with this.",
+      after: "Use Cowork to produce a weekly competitor brief from my working folder, allowed web sources, and connected Slack channel. Show your plan first, keep the output to one page plus a risk list, and stop if you need broader file access.",
+      improvement: "The stronger version gives Cowork a bounded mission, source limits, output shape, and a stop condition.",
+    },
+    visual: "agent",
+  },
+  {
+    id: "claude-code-guide",
+    level: "expert",
+    number: "04",
+    title: "How to use Claude Code well",
+    ico: "code",
+    color: C.navy,
+    summary: "Claude Code is a terminal first coding surface that reads your codebase, edits files, runs commands, and integrates with development tools. Its natural home is repository native work.",
+    whyItMatters: "Claude Code is not just Claude for programmers. It is its own working environment.",
+    beginnerMoves: ["Start Claude Code in the project root.", "Ask for a codebase overview before editing.", "Use small, testable changes first."],
+    advancedMoves: ["Use CLAUDE.md as a repo local operating guide.", "Add MCP servers when tools or data sources matter.", "Treat debugging, refactoring, and PR prep as separate phases."],
+    commonMistakes: ["Editing before understanding the codebase.", "Running large refactors without stating invariants.", "Using Claude Code for broad non code knowledge work."],
+    promptExamples: [
+      { prompt: "Give me a high level overview of this codebase. Map the entry points, core modules, and likely request flow.", why: "This is the safest opening move in an unfamiliar repo." },
+      { prompt: "Reproduce the bug path conceptually, rank likely root causes, then propose the smallest safe fix with tests.", why: "It creates a structured debugging flow." },
+      { prompt: "Refactor this module for clarity without changing behavior. List the invariants you must preserve before editing.", why: "It sets a strong boundary for refactoring." },
+    ],
+    beforeAfter: {
+      before: "Fix this code.",
+      after: "Read this repository first, explain the likely bug path, identify the smallest safe fix, preserve existing behavior, run or update relevant tests, and summarize the change like a PR note.",
+      improvement: "The stronger version adds understanding, scope control, behavior preservation, testing, and packaging.",
+    },
+    visual: "agent",
+  },
+];
+
+const PROMPT_LIBRARY = [
+  { text: "Tell me which Claude surface fits this task best before you answer.", tag: "Routing" },
+  { text: "Use only the uploaded source. Separate explicit facts from inference.", tag: "Source" },
+  { text: "Turn this into an Artifact, then tell me whether it should also be exported as a file.", tag: "Output" },
+  { text: "Search official sources only and separate current facts from interpretation.", tag: "Current" },
+  { text: "Explain this with a diagram first, then a short legend, then a concise explanation.", tag: "Visual" },
+  { text: "Plan this Cowork task first. Tell me what files, tools, websites, and outputs you expect to touch. Wait for approval before you start.", tag: "Cowork" },
+  { text: "Would this task be better in Cowork, Claude in Chrome, or Claude Code? Explain why for each and recommend one.", tag: "Action" },
+  { text: "Give me a high level overview of this codebase before editing anything.", tag: "Code" },
+  { text: "Reproduce the bug path conceptually, rank likely root causes, then propose the smallest safe fix with tests.", tag: "Debug" },
+  { text: "Make this conversation share ready and flag anything that should stay private.", tag: "Privacy" },
+  { text: "Document the MCP setup this repo actually needs, and justify every server you recommend.", tag: "MCP" },
+  { text: "Convert this one off Cowork task into a recurring scheduled workflow with a final quality checklist.", tag: "Schedule" },
+];
+
+function runDataValidation() {
+  const sectionIds = GUIDE_SECTIONS.map((s) => s.id);
+  const sectionDuplicates = sectionIds.filter((id, index) => sectionIds.indexOf(id) !== index);
+  const cookbookIds = CLAUDE_CODE_COOKBOOK.map((lane) => lane.lane);
+  const cookbookDuplicates = cookbookIds.filter((id, index) => cookbookIds.indexOf(id) !== index);
+  const missingIcons = [
+    ...PRINCIPLES.map((x) => x.ico),
+    ...TOOL_CHOOSER.map((x) => x.ico),
+    ...CORE_FEATURES.map((x) => x.ico),
+    ...GUIDE_SECTIONS.map((x) => x.ico),
+    ...CLAUDE_CODE_COOKBOOK.map((x) => x.icon),
+  ].filter((name) => !ICON_PATHS[name]);
+  const brokenSections = GUIDE_SECTIONS.filter(
+    (s) => !s.title || !s.summary || !Array.isArray(s.beginnerMoves) || !Array.isArray(s.promptExamples)
+  );
+  const invalidCookbook = CLAUDE_CODE_COOKBOOK.filter(
+    (lane) => !lane.lane || !Array.isArray(lane.steps) || !Array.isArray(lane.prompts) || !Array.isArray(lane.outputs)
+  );
+  const invalidPromptLibrary = PROMPT_LIBRARY.filter((x) => !x.text || !x.tag);
+
+  if (sectionDuplicates.length) console.warn("Duplicate section ids:", sectionDuplicates);
+  if (cookbookDuplicates.length) console.warn("Duplicate cookbook lanes:", cookbookDuplicates);
+  if (missingIcons.length) console.warn("Missing icon paths:", missingIcons);
+  if (brokenSections.length) console.warn("Broken section data:", brokenSections.map((s) => s.id));
+  if (invalidCookbook.length) console.warn("Broken cookbook data:", invalidCookbook.map((x) => x.lane));
+  if (invalidPromptLibrary.length) console.warn("Broken prompt library rows:", invalidPromptLibrary);
+}
+
+function SectionVisual({ type }) {
+  const s = { fill: "none", stroke: C.copperDeep, strokeWidth: 1.6, strokeLinecap: "round", strokeLinejoin: "round" };
+  const tx = (x, y, t, size = 10, bold = false, opacity = 1) => (
+    <text x={x} y={y} textAnchor="middle" fill={C.copperDeep} style={{ fontSize: size, fontWeight: bold ? 700 : 500, opacity }}>
+      {t}
+    </text>
+  );
+
+  const visuals = {
+    mental: (
+      <svg viewBox="0 0 360 150" className="cg-svg">
+        <rect x="24" y="12" width="122" height="42" rx="10" {...s} />
+        <rect x="214" y="12" width="122" height="42" rx="10" {...s} />
+        <rect x="119" y="102" width="122" height="40" rx="10" {...s} />
+        <path d="M146 33h68" {...s} />
+        <path d="M85 54l56 48M275 54l-56 48" {...s} />
+        {tx(85, 38, "Your task", 10, true)}
+        {tx(275, 38, "Claude draft", 10, true)}
+        {tx(180, 127, "Your judgment", 10, true)}
+      </svg>
+    ),
+    layers: (
+      <svg viewBox="0 0 360 150" className="cg-svg">
+        {[
+          [40, 10, 280, 24, "Chat"],
+          [54, 40, 252, 24, "Projects"],
+          [68, 70, 224, 24, "Artifacts"],
+          [82, 100, 196, 24, "Cowork, Chrome, Code"],
+        ].map(([x, y, w, h, l]) => (
+          <g key={l}>
+            <rect x={x} y={y} width={w} height={h} rx="8" {...s} />
+            {tx(180, y + 16, l, 9, true)}
+          </g>
+        ))}
+      </svg>
+    ),
+    action: (
+      <svg viewBox="0 0 420 190" className="cg-svg">
+        <rect x="138" y="8" width="144" height="34" rx="10" fill="none" stroke={C.copperDeep} strokeWidth="1.6" />
+        <text x="210" y="29" textAnchor="middle" fill={C.copperDeep} style={{ fontSize: 11, fontWeight: 700 }}>Where is the real work?</text>
+        <rect x="16" y="82" width="116" height="42" rx="10" fill="none" stroke={C.purple} strokeWidth="1.6" />
+        <rect x="152" y="82" width="116" height="42" rx="10" fill="none" stroke="#0f766e" strokeWidth="1.6" />
+        <rect x="288" y="82" width="116" height="42" rx="10" fill="none" stroke={C.navy} strokeWidth="1.6" />
+        <text x="74" y="106" textAnchor="middle" fill={C.purple} style={{ fontSize: 10, fontWeight: 700 }}>Desktop work</text>
+        <text x="210" y="106" textAnchor="middle" fill="#0f766e" style={{ fontSize: 10, fontWeight: 700 }}>Web pages</text>
+        <text x="346" y="106" textAnchor="middle" fill={C.navy} style={{ fontSize: 10, fontWeight: 700 }}>Codebase</text>
+        <path d="M210 42v24M210 66H74M210 66H346" fill="none" stroke={C.copperDeep} strokeWidth="1.4" strokeLinecap="round" />
+        <rect x="16" y="148" width="116" height="28" rx="8" fill="none" stroke={C.purple} strokeWidth="1.6" />
+        <rect x="152" y="148" width="116" height="28" rx="8" fill="none" stroke="#0f766e" strokeWidth="1.6" />
+        <rect x="288" y="148" width="116" height="28" rx="8" fill="none" stroke={C.navy} strokeWidth="1.6" />
+        <text x="74" y="166" textAnchor="middle" fill={C.purple} style={{ fontSize: 10, fontWeight: 700 }}>Cowork</text>
+        <text x="210" y="166" textAnchor="middle" fill="#0f766e" style={{ fontSize: 10, fontWeight: 700 }}>Claude in Chrome</text>
+        <text x="346" y="166" textAnchor="middle" fill={C.navy} style={{ fontSize: 10, fontWeight: 700 }}>Claude Code</text>
+      </svg>
+    ),
+    ecosystem: (
+      <svg viewBox="0 0 420 200" className="cg-svg">
+        <rect x="142" y="12" width="136" height="34" rx="10" fill="none" stroke={C.purple} strokeWidth="1.7" />
+        <text x="210" y="33" textAnchor="middle" fill={C.purple} style={{ fontSize: 11, fontWeight: 700 }}>Cowork</text>
+        <rect x="18" y="82" width="112" height="38" rx="10" fill="none" stroke={C.clay} strokeWidth="1.6" />
+        <text x="74" y="105" textAnchor="middle" fill={C.clay} style={{ fontSize: 10, fontWeight: 700 }}>Extra tools</text>
+        <rect x="154" y="82" width="112" height="38" rx="10" fill="none" stroke={C.copper} strokeWidth="1.6" />
+        <text x="210" y="105" textAnchor="middle" fill={C.copper} style={{ fontSize: 10, fontWeight: 700 }}>Connected sources</text>
+        <rect x="290" y="82" width="112" height="38" rx="10" fill="none" stroke={C.navy} strokeWidth="1.6" />
+        <text x="346" y="105" textAnchor="middle" fill={C.navy} style={{ fontSize: 10, fontWeight: 700 }}>Recurring runs</text>
+        <rect x="142" y="154" width="136" height="30" rx="10" fill="none" stroke={C.gold} strokeWidth="1.6" />
+        <text x="210" y="173" textAnchor="middle" fill={C.gold} style={{ fontSize: 10, fontWeight: 700 }}>Finished output</text>
+        <path d="M210 46v22M210 68H74M210 68H346M74 120l98 32M210 120v34M346 120l-98 32" fill="none" stroke={C.copperDeep} strokeWidth="1.3" strokeLinecap="round" />
+      </svg>
+    ),
+  };
+
+  return visuals[type] || visuals.layers;
+}
+
+function Badge({ children, color, bg }) {
   return (
-    <span className="cg-tag" style={{ color, background: bg }}>
+    <span style={{ borderRadius: 999, background: bg, color, padding: "4px 10px", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>
       {children}
     </span>
   );
 }
 
-function SectionTitle({ icon, children, sub }) {
+function SectionTitle({ icon, title, subtitle }) {
   return (
-    <div style={{ marginBottom: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: C.accentBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon name={icon} size={18} color={C.accent} />
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ width: 38, height: 38, borderRadius: 12, background: C.copperLight, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon name={icon} size={18} color={C.clay} />
         </div>
-        <h2 style={{ fontSize: 24, fontWeight: 700, color: C.text, margin: 0 }}>{children}</h2>
+        <h2 className="cg-display cg-heading-lg" style={{ margin: 0, fontSize: 28, color: C.ink }}>{title}</h2>
       </div>
-      {sub && <p style={{ marginTop: 8, marginLeft: 48, fontSize: 14, color: C.muted, maxWidth: 640, lineHeight: 1.7 }}>{sub}</p>}
+      {subtitle ? <p style={{ margin: "10px 0 0 48px", fontSize: 14, lineHeight: 1.8, color: C.inkLight, maxWidth: 760 }}>{subtitle}</p> : null}
     </div>
   );
 }
 
-function Card({ children, style: s = {}, className = "", hover = true }) {
+function FeatureCard({ title, ico, color, description, when }) {
   return (
-    <div
-      className={hover ? `cg-card ${className}` : className}
-      style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: radius.lg, padding: 24, boxShadow: C.shadow, ...s }}
-    >
-      {children}
+    <div className="cg-card-pad" style={{ borderRadius: 20, border: `1px solid ${C.border}`, background: "white", padding: 20, boxShadow: C.shadow, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, minWidth: 0 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: `${color}14`, flexShrink: 0 }}>
+          <Icon name={ico} size={17} color={color} />
+        </div>
+        <div className="cg-display cg-wrap-anywhere" style={{ fontSize: 16, fontWeight: 600, color: C.ink }}>{title}</div>
+      </div>
+      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.7, color: C.inkLight }}>{description}</p>
+      <div style={{ marginTop: 12, borderRadius: 12, padding: "10px 12px", background: C.creamWarm, color: C.inkLight, fontSize: 12, lineHeight: 1.65 }}>
+        <strong style={{ color }}>Use it when: </strong>{when}
+      </div>
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   MAIN COMPONENT
-   ═══════════════════════════════════════════════════════════════ */
-export default function ClaudeCompleteGuide() {
-  const [activePath, setActivePath] = useState("start");
-  const [openModule, setOpenModule] = useState("what-claude-does");
-  const [activeNav, setActiveNav] = useState("");
-  const containerRef = useRef(null);
-
-  const selectedPath = useMemo(
-    () => learningPaths.find((p) => p.id === activePath) || learningPaths[0],
-    [activePath]
+function MatrixCard({ item }) {
+  return (
+    <div className="cg-card-pad" style={{ borderRadius: 18, border: `1px solid ${C.border}`, background: "white", padding: 18, boxShadow: C.shadow, minWidth: 0 }}>
+      <div className="cg-display cg-wrap-anywhere" style={{ fontSize: 18, color: C.ink, marginBottom: 10 }}>{item.surface}</div>
+      <div style={{ display: "grid", gap: 8 }}>
+        <div style={{ fontSize: 13, lineHeight: 1.7, color: C.ink }}><strong>Best for: </strong>{item.best}</div>
+        <div style={{ fontSize: 13, lineHeight: 1.7, color: C.inkLight }}><strong style={{ color: C.copper }}>Strength: </strong>{item.strengths}</div>
+        <div style={{ fontSize: 13, lineHeight: 1.7, color: C.inkLight }}><strong style={{ color: C.rose }}>Limit: </strong>{item.limits}</div>
+      </div>
+    </div>
   );
+}
 
-  const navItems = [
-    { id: "paths", label: "Learning paths" },
-    { id: "features", label: "Feature map" },
-    { id: "modes", label: "Mode selector" },
-    { id: "compare", label: "Comparisons" },
-    { id: "modules", label: "Deep dive" },
-    { id: "mistakes", label: "Fixes" },
-    { id: "prompts", label: "Prompt library" },
-  ];
+function PlaybookCard({ title, when, flow, risks }) {
+  return (
+    <div className="cg-card-pad" style={{ borderRadius: 18, border: `1px solid ${C.borderLight}`, background: "white", padding: 18, minWidth: 0 }}>
+      <div className="cg-display cg-wrap-anywhere" style={{ fontSize: 18, color: C.ink, marginBottom: 6 }}>{title}</div>
+      <div style={{ fontSize: 13, lineHeight: 1.7, color: C.inkLight, marginBottom: 12 }}><strong>Use it when: </strong>{when}</div>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.copper, marginBottom: 8 }}>How it usually goes</div>
+      <div style={{ display: "grid", gap: 8 }}>
+        {flow.map((step, i) => (
+          <div key={`${title}-flow-${i}`} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13, lineHeight: 1.7, color: C.ink }}>
+            <span style={{ width: 22, height: 22, borderRadius: 999, background: C.copperLight, color: C.copper, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, flexShrink: 0 }}>{i + 1}</span>
+            <span>{step}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.rose, marginTop: 14, marginBottom: 8 }}>Watch for</div>
+      <div style={{ display: "grid", gap: 8 }}>
+        {risks.map((risk, i) => (
+          <div key={`${title}-risk-${i}`} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13, lineHeight: 1.7, color: C.inkLight }}>
+            <Icon name="alertTriangle" size={14} color={C.rose} style={{ marginTop: 2 }} />
+            <span>{risk}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const sections = navItems.map(n => document.getElementById(`section-${n.id}`)).filter(Boolean);
-      let current = "";
-      for (const sec of sections) {
-        if (sec.getBoundingClientRect().top <= 120) {
-          current = sec.id.replace("section-", "");
-        }
-      }
-      setActiveNav(current);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+function CookbookLaneCard({ lane }) {
+  return (
+    <div className="cg-card-pad" style={{ borderRadius: 20, border: `1px solid ${C.border}`, background: "white", padding: 18, boxShadow: C.shadow, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 12, background: `${lane.color}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Icon name={lane.icon} size={16} color={lane.color} />
+          </div>
+          <div className="cg-display cg-wrap-anywhere" style={{ fontSize: 18, color: C.ink }}>{lane.lane}</div>
+        </div>
+        <Badge color={lane.color} bg={`${lane.color}15`}>Pattern</Badge>
+      </div>
+      <div style={{ fontSize: 13, lineHeight: 1.75, color: C.ink, marginBottom: 12 }}><strong>Goal: </strong>{lane.objective}</div>
+      <div style={{ display: "grid", gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.inkMuted, marginBottom: 8 }}>When this pattern helps</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {lane.triggers.map((t, i) => (
+              <span key={`${lane.lane}-trigger-${i}`} style={{ padding: "4px 10px", borderRadius: 999, border: `1px solid ${C.borderLight}`, background: C.paper, fontSize: 12, color: C.inkLight }}>
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.copper, marginBottom: 8 }}>How to use it</div>
+          <div style={{ display: "grid", gap: 8 }}>
+            {lane.steps.map((step, i) => (
+              <div key={`${lane.lane}-step-${i}`} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13, lineHeight: 1.75, color: C.ink }}>
+                <span style={{ width: 22, height: 22, borderRadius: 999, background: C.copperLight, color: C.copper, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, flexShrink: 0 }}>{i + 1}</span>
+                <span>{step}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.navy, marginBottom: 8 }}>Try asking Claude Code</div>
+          <div style={{ display: "grid", gap: 8 }}>
+            {lane.prompts.map((prompt, i) => (
+              <div key={`${lane.lane}-prompt-${i}`} className="cg-mono cg-code-card" style={{ borderRadius: 12, border: `1px solid ${C.borderLight}`, background: C.creamWarm, padding: 12, fontSize: 12, lineHeight: 1.7, color: C.ink }}>
+                {prompt}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.clay, marginBottom: 8 }}>What you should get back</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {lane.outputs.map((o, i) => (
+              <span key={`${lane.lane}-output-${i}`} style={{ padding: "4px 10px", borderRadius: 999, background: C.copperLight, color: C.clay, fontSize: 12, fontWeight: 600 }}>
+                {o}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReferenceRow({ label, value, note }) {
+  return (
+    <div className="cg-reference-row" style={{ padding: "12px 0", borderTop: `1px solid ${C.borderLight}` }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: C.ink }}>{label}</div>
+      <div className="cg-mono cg-wrap-anywhere" style={{ fontSize: 12, color: C.navy }}>{value}</div>
+      <div style={{ fontSize: 13, lineHeight: 1.7, color: C.inkLight }}>{note}</div>
+    </div>
+  );
+}
+
+function GuideSectionCard({ section, isExpanded, onToggle }) {
+  const extraCowork = section.id === "cowork-guide";
+  const extraCode = section.id === "claude-code-guide";
 
   return (
-    <div className="cg-root" ref={containerRef} style={{ minHeight: "100vh", background: C.bg, color: C.text }}>
-      <GlobalStyles />
+    <section id={section.id} style={{ overflow: "hidden", borderRadius: 24, border: `1px solid ${C.border}`, background: "white", boxShadow: C.shadow, minWidth: 0 }}>
+      <button onClick={onToggle} style={{ width: "100%", border: "none", background: "transparent", padding: 24, textAlign: "left", display: "flex", gap: 16, alignItems: "flex-start" }}>
+        <div style={{ width: 46, height: 46, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", color: "white", background: section.color, flexShrink: 0 }}>
+          <Icon name={section.ico} size={18} color="white" />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.inkMuted }}>{section.number} · {section.level}</div>
+          <h3 className="cg-display cg-heading-lg cg-wrap-anywhere" style={{ margin: "4px 0 0", fontSize: 22, lineHeight: 1.18, color: C.ink }}>{section.title}</h3>
+          {!isExpanded ? <p style={{ margin: "8px 0 0", fontSize: 14, lineHeight: 1.7, color: C.inkLight }}>{section.summary}</p> : null}
+        </div>
+        <Icon name={isExpanded ? "chevronUp" : "chevronDown"} size={18} color={C.inkMuted} />
+      </button>
 
-      {/* ─── HERO ─── */}
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 24px 0" }}>
-        <header style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: radius.xl, padding: "48px 40px", boxShadow: C.shadowLg, position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: -60, right: -60, width: 200, height: 200, borderRadius: "50%", background: C.accentBg, opacity: 0.4 }} />
-          <div style={{ position: "absolute", bottom: -40, left: -40, width: 140, height: 140, borderRadius: "50%", background: C.oliveBg, opacity: 0.3 }} />
-
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 14px", borderRadius: 100, border: `1px solid ${C.line}`, background: C.surface2, marginBottom: 20 }}>
-              <Icon name="bookmark" size={14} color={C.accent} />
-              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: C.accent }}>Claude User Guide · Comprehensive Edition</span>
+      {isExpanded ? (
+        <div style={{ borderTop: `1px solid ${C.borderLight}`, padding: 24, background: C.paper }}>
+          <div className="cg-grid-2" style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18, minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.85, color: C.ink }}>{section.summary}</p>
+              <div style={{ borderRadius: 16, border: `1px solid ${C.borderLight}`, background: C.creamWarm, padding: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.inkMuted, marginBottom: 8 }}>Why this matters</div>
+                <div style={{ fontSize: 13, lineHeight: 1.8, color: C.ink }}>{section.whyItMatters}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.copper, marginBottom: 8 }}>Start here</div>
+                <div style={{ display: "grid", gap: 8 }}>
+                  {section.beginnerMoves.map((m, i) => (
+                    <div key={`${section.id}-beginner-${i}`} style={{ display: "flex", gap: 10, fontSize: 13, lineHeight: 1.75, color: C.ink }}>
+                      <Icon name="checkCircle" size={15} color={C.copper} style={{ marginTop: 2 }} />
+                      <span>{m}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.navy, marginBottom: 8 }}>Go further</div>
+                <div style={{ display: "grid", gap: 8 }}>
+                  {section.advancedMoves.map((m, i) => (
+                    <div key={`${section.id}-advanced-${i}`} style={{ display: "flex", gap: 10, fontSize: 13, lineHeight: 1.75, color: C.ink }}>
+                      <Icon name="arrowRight" size={15} color={C.navy} style={{ marginTop: 2 }} />
+                      <span>{m}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.rose, marginBottom: 8 }}>Common mistakes</div>
+                <div style={{ display: "grid", gap: 8 }}>
+                  {section.commonMistakes.map((m, i) => (
+                    <div key={`${section.id}-mistake-${i}`} style={{ display: "flex", gap: 10, fontSize: 13, lineHeight: 1.75, color: C.ink }}>
+                      <Icon name="alertTriangle" size={15} color={C.rose} style={{ marginTop: 2 }} />
+                      <span>{m}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <h1 style={{ fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 800, color: C.text, margin: 0, maxWidth: 800, letterSpacing: "-0.02em" }}>
-              Learn Claude faster,<br />with less reading fatigue
-            </h1>
-
-            <p style={{ marginTop: 16, fontSize: 16, color: C.textSecondary, maxWidth: 640, lineHeight: 1.75 }}>
-              What Claude can do, which mode to choose, what each feature is for, and how to understand it through diagrams, comparisons, and clear visual structure — not walls of text.
-            </p>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginTop: 32 }}>
-              {[
-                ["eye", "Tables, maps, and comparisons", "Visual-first teaching"],
-                ["target", "User-facing explanations", "Practical, not theoretical"],
-                ["wand", "Warm, readable design", "Built for sustained focus"],
-              ].map(([icon, title, sub]) => (
-                <div key={title} style={{ background: C.surface2, border: `1px solid ${C.lineLight}`, borderRadius: radius.md, padding: "16px 18px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                    <Icon name={icon} size={16} color={C.accentSoft} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{title}</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18, minWidth: 0 }}>
+              <div style={{ borderRadius: 16, border: `1px solid ${C.borderLight}`, background: C.creamWarm, padding: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.inkMuted, marginBottom: 10 }}>Visual guide</div>
+                <SectionVisual type={section.id === "cowork-guide" || section.id === "claude-code-guide" ? "action" : section.visual} />
+              </div>
+              <div style={{ display: "grid", gap: 10 }}>
+                {section.promptExamples.map((p, i) => (
+                  <div key={`${section.id}-prompt-${i}`} className="cg-code-card" style={{ borderRadius: 14, border: `1px solid ${C.borderLight}`, background: "white", padding: 14 }}>
+                    <div className="cg-mono cg-wrap-anywhere" style={{ fontSize: 12, lineHeight: 1.7, color: C.ink }}>{p.prompt}</div>
+                    <div style={{ marginTop: 6, fontSize: 11, lineHeight: 1.6, color: C.inkMuted }}>{p.why}</div>
                   </div>
-                  <span style={{ fontSize: 13, color: C.muted }}>{sub}</span>
+                ))}
+              </div>
+              <div style={{ borderRadius: 16, border: `1px solid ${C.borderLight}`, background: C.paper, padding: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.inkMuted, marginBottom: 10 }}>Before and after</div>
+                <div className="cg-grid-2" style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                  <div style={{ borderRadius: 12, border: "1px solid #fecaca", background: "#fef2f2", padding: 12 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#dc2626", marginBottom: 6 }}>Weaker</div>
+                    <div className="cg-mono cg-wrap-anywhere" style={{ fontSize: 12, lineHeight: 1.7, color: C.ink }}>{section.beforeAfter.before}</div>
+                  </div>
+                  <div style={{ borderRadius: 12, border: "1px solid #bbf7d0", background: "#f0fdf4", padding: 12 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#16a34a", marginBottom: 6 }}>Stronger</div>
+                    <div className="cg-mono cg-wrap-anywhere" style={{ fontSize: 12, lineHeight: 1.7, color: C.ink }}>{section.beforeAfter.after}</div>
+                  </div>
                 </div>
-              ))}
+                <div style={{ marginTop: 10, display: "flex", gap: 8, fontSize: 12, lineHeight: 1.75, color: C.copper }}>
+                  <Icon name="lightbulb" size={15} color={C.copper} style={{ marginTop: 2 }} />
+                  <span>{section.beforeAfter.improvement}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {extraCowork ? (
+            <div style={{ marginTop: 24, display: "grid", gap: 18 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.purple }}>Common Cowork setups</div>
+              <div className="cg-grid-3" style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))" }}>
+                {COWORK_PLAYBOOKS.map((pb, i) => (
+                  <PlaybookCard key={`cowork-${i}`} {...pb} />
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {extraCode ? (
+            <div style={{ marginTop: 24, display: "grid", gap: 18 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.navy }}>Common Claude Code setups</div>
+              <div className="cg-grid-2" style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))" }}>
+                {CLAUDE_CODE_PLAYBOOKS.map((pb, i) => (
+                  <div key={`code-${i}`} className="cg-card-pad" style={{ borderRadius: 18, border: `1px solid ${C.border}`, background: "white", padding: 18, minWidth: 0 }}>
+                    <div className="cg-display cg-wrap-anywhere" style={{ fontSize: 18, color: C.ink, marginBottom: 6 }}>{pb.title}</div>
+                    <div style={{ fontSize: 13, lineHeight: 1.7, color: C.inkLight, marginBottom: 10 }}><strong>Use it when: </strong>{pb.useWhen}</div>
+                    <div style={{ fontSize: 13, lineHeight: 1.7, color: C.navy, marginBottom: 10 }}>{pb.why}</div>
+                    <div style={{ display: "grid", gap: 8 }}>
+                      {pb.prompts.map((prompt, j) => (
+                        <div key={`code-prompt-${i}-${j}`} className="cg-mono cg-code-card" style={{ borderRadius: 12, border: `1px solid ${C.borderLight}`, background: C.creamWarm, padding: 12, fontSize: 12, lineHeight: 1.7, color: C.ink }}>
+                          {prompt}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="cg-card-pad" style={{ borderRadius: 20, border: `1px solid ${C.border}`, background: "white", padding: 18 }}>
+                <div className="cg-display" style={{ fontSize: 18, color: C.ink, marginBottom: 10 }}>Claude Code quick commands</div>
+                <div>
+                  {CLAUDE_CODE_REFERENCE.map((row, i) => (
+                    <ReferenceRow key={`ref-${i}`} {...row} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+export default function ClaudeCompleteGuideReact() {
+  const [level, setLevel] = useState("all");
+  const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState(new Set(["mental-model", "surface-map", "cowork-guide", "claude-code-guide"]));
+  const [activeNav, setActiveNav] = useState("");
+
+  useEffect(() => {
+    runDataValidation();
+  }, []);
+
+  const filteredSections = useMemo(() => {
+    return GUIDE_SECTIONS.filter((s) => {
+      if (level !== "all" && s.level !== level) return false;
+      if (!query.trim()) return true;
+      const haystack = [
+        s.title,
+        s.summary,
+        s.whyItMatters,
+        ...s.beginnerMoves,
+        ...s.advancedMoves,
+        ...s.commonMistakes,
+        ...s.promptExamples.map((p) => p.prompt),
+        s.beforeAfter.before,
+        s.beforeAfter.after,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query.toLowerCase());
+    });
+  }, [level, query]);
+
+  const sectionsByLevel = useMemo(() => {
+    const groups = { foundation: [], core: [], power: [], expert: [] };
+    filteredSections.forEach((section) => {
+      groups[section.level].push(section);
+    });
+    return groups;
+  }, [filteredSections]);
+
+  const levelLabels = { foundation: "Foundation", core: "Core", power: "Power", expert: "Expert" };
+
+  const toggleSection = useCallback((id) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    const ids = ["tools", "prompt", "features", "matrix", "triage", "ecosystem", "cookbook", "sections", "scope"];
+    const onScroll = () => {
+      let current = "";
+      ids.forEach((id) => {
+        const el = document.getElementById(`section-${id}`);
+        if (el && el.getBoundingClientRect().top <= 120) current = id;
+      });
+      setActiveNav(current);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const navItems = [
+    { id: "tools", label: "Tool chooser" },
+    { id: "prompt", label: "Prompt structure" },
+    { id: "features", label: "What Claude can do" },
+    { id: "matrix", label: "Surface guide" },
+    { id: "triage", label: "Cowork, Chrome, or Code" },
+    { id: "ecosystem", label: "Cowork workflow" },
+    { id: "cookbook", label: "Code workflows" },
+    { id: "sections", label: "Guide sections" },
+    { id: "scope", label: "Scope" },
+  ];
+
+  return (
+    <div className="cg-shell" style={{ minHeight: "100vh", background: C.cream, color: C.ink }}>
+      <GlobalStyles />
+      <div style={{ maxWidth: 1220, margin: "0 auto", padding: "28px 24px 64px" }}>
+        <header style={{ overflow: "hidden", borderRadius: 30, border: `1px solid ${C.borderLight}`, background: `linear-gradient(135deg, ${C.copperLight} 0%, ${C.cream} 40%, ${C.creamDark} 100%)`, boxShadow: C.shadowLg }}>
+          <div className="cg-grid-hero" style={{ display: "grid", gap: 24, padding: "34px 34px 30px", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 460px), 1fr))" }}>
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, borderRadius: 999, border: `1px solid ${C.borderLight}`, background: "white", padding: "6px 14px", color: C.copperDeep, marginBottom: 18 }}>
+                <Icon name="bookmark" size={14} color={C.copperDeep} />
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" }}>Claude User Guide</span>
+              </div>
+              <h1 className="cg-display cg-heading-xl" style={{ margin: 0, fontSize: "clamp(36px, 5vw, 56px)", lineHeight: 1.04, color: C.ink }}>A Master Guide to Claude</h1>
+              <p style={{ marginTop: 16, maxWidth: 690, fontSize: 15, lineHeight: 1.88, color: C.inkLight }}>
+                A practical guide to what Claude can do, when to use each surface, and how to get better results without wasting time.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 18 }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, borderRadius: 999, background: "white", padding: "7px 12px", fontSize: 11, fontWeight: 600, color: C.inkLight, boxShadow: C.shadow }}>
+                  <Icon name="lightbulb" size={14} color={C.clay} />
+                  Reviewed against official docs · {VERIFIED_DATE}
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, borderRadius: 999, background: "white", padding: "7px 12px", fontSize: 11, fontWeight: 600, color: C.inkLight, boxShadow: C.shadow }}>
+                  <Icon name="layers" size={14} color={C.clay} />
+                  Includes Cowork, Chrome, and Claude Code
+                </span>
+              </div>
+            </div>
+
+            <div className="cg-card-pad" style={{ borderRadius: 22, border: `1px solid ${C.borderLight}`, background: "white", padding: 20, boxShadow: C.shadow }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.inkMuted, marginBottom: 12 }}>What Claude helps you do</div>
+              <svg viewBox="0 0 420 190" className="cg-svg" style={{ color: C.copperDeep }}>
+                {[
+                  [16, 4, 120, 38, "Thinking", "chat, files"],
+                  [150, 4, 120, 38, "Organizing", "projects, memory"],
+                  [284, 4, 120, 38, "Making", "artifacts, exports"],
+                  [16, 120, 120, 38, "Searching", "web, research"],
+                  [150, 120, 120, 38, "Acting", "cowork, chrome"],
+                  [284, 120, 120, 38, "Coding", "claude code"],
+                ].map(([x, y, w, h, l, sub]) => (
+                  <g key={l}>
+                    <rect x={x} y={y} width={w} height={h} rx="10" fill="none" stroke={C.copperDeep} strokeWidth="1.6" />
+                    <text x={x + w / 2} y={y + 18} textAnchor="middle" fill={C.copperDeep} style={{ fontSize: 10, fontWeight: 700 }}>{l}</text>
+                    <text x={x + w / 2} y={y + 30} textAnchor="middle" fill={C.copperDeep} style={{ fontSize: 7, opacity: 0.45 }}>{sub}</text>
+                  </g>
+                ))}
+              </svg>
             </div>
           </div>
         </header>
-      </div>
 
-      {/* ─── STICKY NAV ─── */}
-      <div className="cg-hide-mobile" style={{ position: "sticky", top: 0, zIndex: 50, padding: "12px 24px", background: `${C.bg}ee`, backdropFilter: "blur(12px)", marginTop: 24 }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 4, overflowX: "auto", borderRadius: radius.md, background: C.surface, border: `1px solid ${C.line}`, padding: 4 }}>
-          {navItems.map(n => (
-            <a
-              key={n.id}
-              href={`#section-${n.id}`}
-              onClick={e => { e.preventDefault(); document.getElementById(`section-${n.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
-              style={{
-                padding: "8px 16px", borderRadius: 14, fontSize: 13, fontWeight: 500, textDecoration: "none", whiteSpace: "nowrap",
-                background: activeNav === n.id ? C.accentBg : "transparent",
-                color: activeNav === n.id ? C.accent : C.textSecondary,
-                transition: "all 0.15s ease",
-              }}
-            >
-              {n.label}
-            </a>
-          ))}
+        <div className="cg-sticky-desktop" style={{ position: "sticky", top: 0, zIndex: 30, paddingTop: 18, background: `${C.cream}ee`, backdropFilter: "blur(10px)" }}>
+          <div className="cg-scroll-hide" style={{ display: "flex", gap: 6, overflowX: "auto", borderRadius: 18, background: "white", border: `1px solid ${C.border}`, padding: 6, boxShadow: C.shadow }}>
+            {navItems.map((n) => (
+              <a
+                key={n.id}
+                className="cg-nav-button"
+                href={`#section-${n.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  const el = document.getElementById(`section-${n.id}`);
+                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                style={{ textDecoration: "none", padding: "8px 14px", borderRadius: 12, fontSize: 13, fontWeight: 600, color: activeNav === n.id ? C.clay : C.inkLight, background: activeNav === n.id ? C.copperLight : "transparent" }}
+              >
+                {n.label}
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 24px 64px" }}>
+        <section style={{ marginTop: 28 }}>
+          <div style={{ marginBottom: 14, fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.inkMuted }}>Core principles</div>
+          <div className="cg-grid-3" style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))" }}>
+            {PRINCIPLES.map((p) => (
+              <div key={p.title} className="cg-card-pad" style={{ display: "flex", gap: 12, borderRadius: 18, border: `1px solid ${C.border}`, background: "white", padding: 16, boxShadow: C.shadow }}>
+                <div style={{ width: 38, height: 38, borderRadius: 12, background: C.copperDeep, display: "flex", alignItems: "center", justifyContent: "center", color: "white", flexShrink: 0 }}>
+                  <Icon name={p.ico} size={17} color="white" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{p.title}</div>
+                  <div style={{ marginTop: 4, fontSize: 12, lineHeight: 1.7, color: C.inkLight }}>{p.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
-        {/* ─── LEARNING PATHS ─── */}
-        <section id="section-paths" style={{ marginBottom: 48 }}>
-          <SectionTitle icon="graduation" sub="Three tracks based on your experience level. Pick one and follow its recommended sequence.">
-            Choose your learning path
-          </SectionTitle>
+        <section id="section-tools" style={{ marginTop: 28, borderRadius: 24, border: `1px solid ${C.border}`, background: "white", padding: 24, boxShadow: C.shadow }}>
+          <SectionTitle icon="route" title="Which Claude tool should you use?" subtitle="A lot of weak results start with the wrong surface, not the wrong prompt." />
+          <div className="cg-table-wrap" style={{ borderRadius: 16, border: `1px solid ${C.borderLight}` }}>
+            <table style={{ width: "100%", minWidth: 860 }}>
+              <thead>
+                <tr style={{ background: C.creamWarm }}>
+                  {["Your goal", "Best tool", "Why"].map((head) => (
+                    <th key={head} style={{ textAlign: "left", padding: "14px 16px", fontSize: 12, fontWeight: 700, color: C.ink, borderBottom: `1px solid ${C.border}` }}>{head}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {TOOL_CHOOSER.map((row, i) => (
+                  <tr key={row.goal} style={{ background: i % 2 === 0 ? "white" : C.paper }}>
+                    <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 600, color: C.ink, borderBottom: `1px solid ${C.borderLight}` }}>{row.goal}</td>
+                    <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 700, color: C.copperDeep, borderBottom: `1px solid ${C.borderLight}` }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                        <Icon name={row.ico} size={15} color={C.copperDeep} />
+                        {row.tool}
+                      </span>
+                    </td>
+                    <td style={{ padding: "14px 16px", fontSize: 13, color: C.inkLight, borderBottom: `1px solid ${C.borderLight}` }}>{row.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 16 }}>
-            {learningPaths.map(path => {
-              const active = activePath === path.id;
-              return (
-                <button
-                  key={path.id}
-                  onClick={() => setActivePath(path.id)}
-                  style={{
-                    textAlign: "left", border: `2px solid ${active ? path.color : C.line}`, borderRadius: radius.lg, padding: 24,
-                    background: active ? C.surface : C.surface2, boxShadow: active ? C.shadowLg : "none",
-                    transition: "all 0.2s ease", position: "relative", overflow: "hidden",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: active ? `${path.color}18` : C.surface, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${active ? path.color + "40" : C.line}` }}>
-                      <Icon name={path.icon} size={16} color={active ? path.color : C.muted} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: C.text, fontFamily: "Outfit, sans-serif" }}>{path.label}</div>
-                    </div>
-                    <Badge color={path.color} bg={`${path.color}15`}>{path.audience}</Badge>
-                  </div>
-                  <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.65, margin: "8px 0 0" }}>{path.summary}</p>
-                </button>
-              );
-            })}
+        <section id="section-prompt" style={{ marginTop: 28, borderRadius: 24, border: `1px solid ${C.border}`, background: "white", padding: 24, boxShadow: C.shadow }}>
+          <SectionTitle icon="lightbulb" title="Six parts of a strong prompt" subtitle="The best prompts are clear, specific, and easy to follow." />
+          <div className="cg-grid-3" style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))" }}>
+            {PROMPT_BLOCKS.map((b, i) => (
+              <div key={b.label} className="cg-card-pad" style={{ borderRadius: 16, border: `1px solid ${C.borderLight}`, background: C.creamWarm, padding: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <span style={{ width: 22, height: 22, borderRadius: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", background: b.color, color: "white", fontSize: 11, fontWeight: 800 }}>{i + 1}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{b.label}</span>
+                </div>
+                <div className="cg-mono cg-wrap-anywhere" style={{ fontSize: 11, lineHeight: 1.7, color: C.inkLight }}>{b.example}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="section-features" style={{ marginTop: 28, borderRadius: 24, border: `1px solid ${C.border}`, background: "white", padding: 24, boxShadow: C.shadow }}>
+          <SectionTitle icon="sparkles" title="What Claude can do" subtitle="This guide covers the full working stack, not just the chat window." />
+          <div className="cg-grid-3" style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))" }}>
+            {CORE_FEATURES.map((feature) => (
+              <FeatureCard key={feature.title} {...feature} />
+            ))}
+          </div>
+        </section>
+
+        <section id="section-matrix" style={{ marginTop: 28, borderRadius: 24, border: `1px solid ${C.border}`, background: "white", padding: 24, boxShadow: C.shadow }}>
+          <SectionTitle icon="table" title="How the main surfaces differ" subtitle="Use this when two Claude surfaces sound similar but work differently." />
+          <div className="cg-grid-4" style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))" }}>
+            {SURFACE_MATRIX.map((item) => (
+              <MatrixCard key={item.surface} item={item} />
+            ))}
+          </div>
+        </section>
+
+        <section id="section-triage" style={{ marginTop: 28, borderRadius: 24, border: `1px solid ${C.border}`, background: "white", padding: 24, boxShadow: C.shadow }}>
+          <SectionTitle icon="workflow" title="Cowork, Chrome, or Claude Code?" subtitle="These three surfaces may sound related, but each one is built for a different kind of work." />
+          <div className="cg-grid-3" style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))" }}>
+            {ACTION_TRIAGE.map((card) => (
+              <div key={card.title} className="cg-card-pad" style={{ borderRadius: 18, border: `1px solid ${C.border}`, background: C.paper, padding: 18 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
+                  <div className="cg-display cg-wrap-anywhere" style={{ fontSize: 20, color: C.ink }}>{card.title}</div>
+                  <span style={{ width: 10, height: 10, borderRadius: 999, background: card.color, flexShrink: 0 }} />
+                </div>
+                <div style={{ display: "grid", gap: 10 }}>
+                  <div style={{ fontSize: 13, lineHeight: 1.7, color: C.ink }}><strong>Best for: </strong>{card.best}</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.7, color: C.inkLight }}><strong style={{ color: C.copper }}>Use it when: </strong>{card.useWhen}</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.7, color: C.inkLight }}><strong style={{ color: C.rose }}>Avoid it when: </strong>{card.avoidWhen}</div>
+                </div>
+              </div>
+            ))}
           </div>
 
-          <Card style={{ marginTop: 16, background: C.surface3 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <Icon name="route" size={16} color={selectedPath.color} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: selectedPath.color, fontFamily: "Outfit, sans-serif", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                {selectedPath.label} — Recommended sequence
-              </span>
+          <div className="cg-grid-2" style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", marginTop: 18 }}>
+            <div className="cg-card-pad" style={{ borderRadius: 18, border: `1px solid ${C.borderLight}`, background: C.creamWarm, padding: 18 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.inkMuted, marginBottom: 10 }}>A simple way to choose</div>
+              <SectionVisual type="action" />
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {selectedPath.steps.map((step, i) => (
-                <div key={step} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ background: C.surface, border: `1px solid ${C.line}`, borderRadius: 100, padding: "5px 14px", fontSize: 13, fontWeight: 500, color: C.text }}>
-                    <span style={{ color: selectedPath.color, fontWeight: 700, marginRight: 6 }}>{i + 1}</span>{step}
-                  </span>
-                  {i < selectedPath.steps.length - 1 && (
-                    <Icon name="arrowRight" size={14} color={C.line} />
-                  )}
+            <div className="cg-card-pad" style={{ borderRadius: 18, border: `1px solid ${C.borderLight}`, background: "white", padding: 18 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.inkMuted, marginBottom: 10 }}>In plain English</div>
+              <div style={{ display: "grid", gap: 10 }}>
+                {[
+                  "If the task is mostly reading, drafting, and organizing across desktop sources, start with Cowork.",
+                  "If the website itself contains the context and the actions, use Claude in Chrome.",
+                  "If the main object is a codebase, shell, tests, or a PR ready engineering change, use Claude Code.",
+                  "Plan in chat when helpful, but execute in the surface where the real work actually lives.",
+                ].map((item, i) => (
+                  <div key={`rule-${i}`} style={{ display: "flex", gap: 10, fontSize: 13, lineHeight: 1.75, color: C.ink }}>
+                    <Icon name="arrowRight" size={15} color={C.clay} style={{ marginTop: 2 }} />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-ecosystem" style={{ marginTop: 28, borderRadius: 24, border: `1px solid ${C.border}`, background: "white", padding: 24, boxShadow: C.shadow }}>
+          <SectionTitle icon="layers" title="How Cowork fits into the bigger workflow" subtitle="Cowork becomes easier to use once you can see how tools, connected sources, recurring tasks, and outputs fit together." />
+          <div className="cg-grid-2" style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))" }}>
+            <div className="cg-card-pad" style={{ borderRadius: 18, border: `1px solid ${C.borderLight}`, background: C.creamWarm, padding: 18 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.inkMuted, marginBottom: 10 }}>See the full picture</div>
+              <SectionVisual type="ecosystem" />
+            </div>
+            <div style={{ display: "grid", gap: 12 }}>
+              {COWORK_ECOSYSTEM.map((item, i) => (
+                <div key={`ecosystem-${i}`} className="cg-card-pad" style={{ borderRadius: 16, border: `1px solid ${C.borderLight}`, background: "white", padding: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
+                    <div className="cg-display cg-wrap-anywhere" style={{ fontSize: 18, color: C.ink }}>{item.node}</div>
+                    <Badge color={item.color} bg={`${item.color}15`}>{item.tag}</Badge>
+                  </div>
+                  <div style={{ fontSize: 13, lineHeight: 1.75, color: C.inkLight }}>{item.desc}</div>
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
         </section>
 
-        {/* ─── FEATURE MAP ─── */}
-        <section id="section-features" style={{ marginBottom: 48 }}>
-          <SectionTitle icon="sparkles" sub="Six capability groups. Understanding which group a task belongs to helps you pick the right tools.">
-            What Claude can do
-          </SectionTitle>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))", gap: 16 }}>
-            {featureGroups.map(group => (
-              <Card key={group.title} style={{ padding: 20 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: `${group.color}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Icon name={group.icon} size={16} color={group.color} />
-                  </div>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, fontFamily: "Outfit, sans-serif" }}>{group.title}</h3>
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-                  {group.items.map(item => (
-                    <span key={item} style={{ padding: "3px 11px", borderRadius: 100, fontSize: 12, fontWeight: 500, background: C.surface2, border: `1px solid ${C.lineLight}`, color: C.inkSoft }}>
-                      {item}
-                    </span>
-                  ))}
-                </div>
-                <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.65, margin: 0 }}>{group.note}</p>
-              </Card>
+        <section id="section-cookbook" style={{ marginTop: 28, borderRadius: 24, border: `1px solid ${C.border}`, background: "white", padding: 24, boxShadow: C.shadow }}>
+          <SectionTitle icon="code" title="Practical Claude Code workflows" subtitle="Use these patterns when you want Claude Code to support real development work, not just a quick edit." />
+          <div className="cg-grid-2" style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))" }}>
+            {CLAUDE_CODE_COOKBOOK.map((lane) => (
+              <CookbookLaneCard key={lane.lane} lane={lane} />
             ))}
           </div>
         </section>
 
-        {/* ─── MODE SELECTOR ─── */}
-        <section id="section-modes" style={{ marginBottom: 48 }}>
-          <SectionTitle icon="wand" sub="The most common source of bad results is using the wrong surface. This table helps you choose.">
-            Which mode should you use?
-          </SectionTitle>
-
-          <Card style={{ padding: 0, overflow: "hidden" }}>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", minWidth: 700 }}>
-                <thead>
-                  <tr>
-                    {["Mode", "Best for", "Use when", "Avoid when", "Level"].map((h, i) => (
-                      <th key={h} style={{
-                        padding: "14px 18px", textAlign: "left", fontSize: 12, fontWeight: 700,
-                        fontFamily: "Outfit, sans-serif", letterSpacing: "0.06em", textTransform: "uppercase",
-                        color: C.accent, background: i === 0 ? C.accentBg : C.surface2,
-                        borderBottom: `2px solid ${C.line}`,
-                      }}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {modeRows.map((row, ri) => (
-                    <tr key={row.mode}>
-                      <td style={{ padding: "14px 18px", borderBottom: `1px solid ${C.lineLight}`, background: ri % 2 === 0 ? C.surface : C.surface3, fontWeight: 600, fontSize: 14 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <Icon name={row.icon} size={15} color={C.accentSoft} />
-                          {row.mode}
-                        </div>
-                      </td>
-                      {[row.bestFor, row.useWhen, row.avoidWhen].map((val, ci) => (
-                        <td key={ci} style={{ padding: "14px 18px", borderBottom: `1px solid ${C.lineLight}`, background: ri % 2 === 0 ? C.surface : C.surface3, fontSize: 13, color: C.textSecondary, lineHeight: 1.6 }}>
-                          {val}
-                        </td>
-                      ))}
-                      <td style={{ padding: "14px 18px", borderBottom: `1px solid ${C.lineLight}`, background: ri % 2 === 0 ? C.surface : C.surface3 }}>
-                        <Badge
-                          color={row.level === "Beginner" ? C.olive : row.level === "Intermediate" ? C.navy : C.rust}
-                          bg={row.level === "Beginner" ? C.oliveBg : row.level === "Intermediate" ? C.navyBg : C.rustBg}
-                        >
-                          {row.level}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <section id="section-sections" style={{ marginTop: 28 }}>
+          <div className="cg-toolbar" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 14, marginBottom: 16 }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.inkMuted }}>Guide sections</div>
+              <h2 className="cg-display cg-heading-lg" style={{ margin: "6px 0 0", fontSize: 28, color: C.ink }}>Core topics in detail</h2>
             </div>
-          </Card>
-        </section>
-
-        {/* ─── COMPARISONS ─── */}
-        <section id="section-compare" style={{ marginBottom: 48 }}>
-          <SectionTitle icon="route" sub="Frequently confused features, side by side. Scan these when you are unsure which tool to reach for.">
-            Feature comparisons
-          </SectionTitle>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))", gap: 16 }}>
-            {compareCards.map(card => (
-              <Card key={card.title} style={{ padding: 20 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: `${card.color}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Icon name={card.icon} size={16} color={card.color} />
-                  </div>
-                  <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, fontFamily: "Outfit, sans-serif" }}>{card.title}</h3>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {card.rows.map(row => (
-                    <div key={row.label} style={{ background: C.surface2, border: `1px solid ${C.lineLight}`, borderRadius: radius.sm, padding: "14px 16px" }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontSize: 14, fontWeight: 600 }}>{row.label}</span>
-                        <Badge color={card.color} bg={`${card.color}12`}>{row.tag}</Badge>
-                      </div>
-                      <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.6, margin: 0 }}>{row.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* ─── DEEP DIVE MODULES ─── */}
-        <section id="section-modules" style={{ marginBottom: 48 }}>
-          <SectionTitle icon="layers" sub="Twelve modules, each self-contained. Expand only what you need. Scan first, read second.">
-            Deep dive modules
-          </SectionTitle>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {modules.map(mod => {
-              const isOpen = openModule === mod.id;
-              return (
-                <div key={mod.id} style={{ background: isOpen ? C.surface : C.surface2, border: `1px solid ${isOpen ? C.accentSoft + "60" : C.line}`, borderRadius: radius.lg, overflow: "hidden", boxShadow: isOpen ? C.shadowLg : C.shadow, transition: "all 0.2s ease", position: "relative" }}>
-                  <div className="cg-section-num">{mod.number}</div>
-
-                  <button
-                    onClick={() => setOpenModule(isOpen ? "" : mod.id)}
-                    style={{ width: "100%", textAlign: "left", padding: "20px 24px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, background: "transparent", border: "none", position: "relative", zIndex: 1 }}
-                  >
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 14, flex: 1 }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: isOpen ? C.accentBg : C.surface, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${isOpen ? C.accent + "30" : C.lineLight}`, flexShrink: 0, marginTop: 2 }}>
-                        <Icon name={mod.icon} size={17} color={isOpen ? C.accent : C.muted} />
-                      </div>
-                      <div>
-                        <h3 style={{ fontSize: 17, fontWeight: 700, fontFamily: "Outfit, sans-serif", color: C.text, margin: 0 }}>
-                          <span style={{ color: C.accentSoft, marginRight: 8, fontSize: 14 }}>{mod.number}.</span>
-                          {mod.title}
-                        </h3>
-                        <p style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.65, margin: "6px 0 0", maxWidth: 680 }}>{mod.summary}</p>
-                      </div>
-                    </div>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: C.surface, border: `1px solid ${C.lineLight}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 4 }}>
-                      <Icon name={isOpen ? "chevronUp" : "chevronDown"} size={16} color={C.muted} />
-                    </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <input className="cg-toolbar-search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search sections..." style={{ borderRadius: 12, border: `1px solid ${C.border}`, background: "white", padding: "10px 12px", fontSize: 13, color: C.ink, minWidth: 220 }} />
+              <div className="cg-chip-row" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {LEVELS.map((l) => (
+                  <button key={l.key} onClick={() => setLevel(l.key)} style={{ borderRadius: 12, border: level === l.key ? `1px solid ${C.copperDeep}` : `1px solid ${C.border}`, background: level === l.key ? C.copperDeep : "white", color: level === l.key ? "white" : C.inkLight, padding: "10px 12px", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                    {l.label}
                   </button>
+                ))}
+                <button onClick={() => setExpanded(new Set(GUIDE_SECTIONS.map((s) => s.id)))} style={{ borderRadius: 12, border: `1px solid ${C.border}`, background: "white", color: C.inkLight, padding: "10px 12px", fontSize: 12 }}>Expand</button>
+                <button onClick={() => setExpanded(new Set())} style={{ borderRadius: 12, border: `1px solid ${C.border}`, background: "white", color: C.inkLight, padding: "10px 12px", fontSize: 12 }}>Collapse</button>
+              </div>
+            </div>
+          </div>
 
-                  {isOpen && (
-                    <div style={{ borderTop: `1px solid ${C.lineLight}`, padding: "24px 24px 28px", background: C.surface }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 20 }}>
-                        {/* Left: Key points */}
-                        <div>
-                          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.accent, marginBottom: 14 }}>Key points</div>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                            {mod.bullets.map((b, i) => (
-                              <div key={i} style={{ display: "flex", gap: 10, fontSize: 14, color: C.text, lineHeight: 1.6 }}>
-                                <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.accentSoft, flexShrink: 0, marginTop: 9 }} />
-                                <span>{b}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Right: Tips and prompt */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                          {/* Pro tip */}
-                          <div style={{ background: C.oliveBg, border: `1px solid ${C.olive}30`, borderRadius: radius.sm, padding: "14px 16px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                              <Icon name="lightbulb" size={14} color={C.olive} />
-                              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.olive }}>Pro tip</span>
-                            </div>
-                            <p style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.65, margin: 0 }}>{mod.proTip}</p>
-                          </div>
-
-                          {/* Pitfall */}
-                          <div style={{ background: C.rustBg, border: `1px solid ${C.rust}30`, borderRadius: radius.sm, padding: "14px 16px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                              <Icon name="alertTriangle" size={14} color={C.rust} />
-                              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.rust }}>Common pitfall</span>
-                            </div>
-                            <p style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.65, margin: 0 }}>{mod.pitfall}</p>
-                          </div>
-
-                          {/* Try this prompt */}
-                          <div style={{ background: C.surface3, border: `1px solid ${C.line}`, borderRadius: radius.sm, padding: "14px 16px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                              <Icon name="terminal" size={14} color={C.accent} />
-                              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.accent }}>Try this prompt</span>
-                            </div>
-                            <p style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.65, margin: 0, fontStyle: "italic" }}>"{mod.prompt}"</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+          <div style={{ display: "grid", gap: 16 }}>
+            {Object.entries(sectionsByLevel).map(([lev, sections]) => {
+              if (!sections.length) return null;
+              return (
+                <div key={lev}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                    <div style={{ height: 1, background: C.border, flex: 1 }} />
+                    <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.inkMuted }}>{levelLabels[lev]}</span>
+                    <div style={{ height: 1, background: C.border, flex: 1 }} />
+                  </div>
+                  <div style={{ display: "grid", gap: 14 }}>
+                    {sections.map((section) => (
+                      <GuideSectionCard key={section.id} section={section} isExpanded={expanded.has(section.id)} onToggle={() => toggleSection(section.id)} />
+                    ))}
+                  </div>
                 </div>
               );
             })}
           </div>
         </section>
 
-        {/* ─── MISTAKES & PROMPTS ─── */}
-        <section id="section-mistakes" style={{ marginBottom: 48 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 24 }}>
-
-            {/* Mistakes */}
-            <div>
-              <SectionTitle icon="checkCircle" sub="Most poor results come from a small set of repeatable errors.">
-                Common mistakes and fast fixes
-              </SectionTitle>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {mistakes.map((m, i) => (
-                  <Card key={i} style={{ padding: 18 }}>
-                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 8, background: C.rustBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
-                        <Icon name={m.icon} size={15} color={C.rust} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 4 }}>{m.problem}</div>
-                        <div style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.6 }}>{m.fix}</div>
-                      </div>
-                    </div>
-                  </Card>
+        <section id="section-scope" style={{ marginTop: 28 }}>
+          <div className="cg-grid-2" style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))" }}>
+            <div className="cg-card-pad" style={{ borderRadius: 24, border: `1px solid ${C.border}`, background: "white", padding: 24, boxShadow: C.shadow }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.inkMuted }}>In this guide</div>
+              <h3 className="cg-display cg-heading-lg" style={{ margin: "10px 0 0", fontSize: 24, color: C.ink }}>What this guide includes</h3>
+              <div style={{ display: "grid", gap: 10, marginTop: 16 }}>
+                {[
+                  "The main Claude surfaces that ordinary users are most likely to use.",
+                  "How Projects, Artifacts, search, Research, Cowork, Chrome, and Claude Code differ.",
+                  "Practical workflows, common mistakes, and faster ways to decide what to use.",
+                  "A user guide, not an API manual or admin reference.",
+                  "A layout tuned to stay readable on smaller screens.",
+                ].map((item, i) => (
+                  <div key={`scope-${i}`} style={{ borderRadius: 14, background: C.creamWarm, padding: "12px 14px", fontSize: 13, lineHeight: 1.75, color: C.inkLight }}>{item}</div>
                 ))}
               </div>
             </div>
-
-            {/* Prompt library */}
-            <div id="section-prompts">
-              <SectionTitle icon="terminal" sub="Copy-paste these into any Claude conversation to get better results immediately.">
-                10 prompts worth reusing
-              </SectionTitle>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {promptLibrary.map((p, i) => (
-                  <Card key={i} style={{ padding: 16 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-                      <div style={{ display: "flex", gap: 10, flex: 1 }}>
-                        <span style={{ fontFamily: "Outfit, sans-serif", fontWeight: 800, color: C.accentSoft, fontSize: 15, lineHeight: "22px", flexShrink: 0 }}>
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        <span style={{ fontSize: 14, color: C.text, lineHeight: 1.6 }}>{p.text}</span>
-                      </div>
-                      <Badge color={C.navy} bg={C.navyBg}>{p.tag}</Badge>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+            <div className="cg-card-pad" style={{ borderRadius: 24, border: "1px solid #ead8c8", background: `linear-gradient(135deg, ${C.copperLight}, #fbf2e8)`, padding: 24, boxShadow: C.shadow }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.copperDeep }}>Bottom line</div>
+              <h3 className="cg-display cg-heading-xl" style={{ margin: "10px 0 0", fontSize: 28, color: C.copperDeep }}>Use Claude with intent</h3>
+              <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.9, color: C.copperDeep }}>
+                Start with the right surface. Give Claude a clear job. Check the parts that matter. Then turn the result into something you can actually use, share, or keep building on.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* ─── FOOTER ─── */}
-        <footer style={{ textAlign: "center", padding: "32px 0 0", borderTop: `1px solid ${C.lineLight}` }}>
-          <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.7 }}>
+        <footer style={{ marginTop: 32, padding: "28px 0 8px", borderTop: `1px solid ${C.borderLight}`, textAlign: "center" }}>
+          <p style={{ fontSize: 13, color: C.inkMuted, lineHeight: 1.7, margin: 0 }}>
             Claude User Guide
-             <br />
-            © 2026 EugeneYip.com All Rights Reserved. 
+            <br />
+            © 2026 EugeneYip.com All Rights Reserved.
           </p>
         </footer>
       </div>
